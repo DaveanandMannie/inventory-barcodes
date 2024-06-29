@@ -57,7 +57,7 @@ def generate_label(output_dir: str, label_data: list, index: int):
     converted_svg: bytes = svg_buffer_data.convert_to_pdf()
     label: Document = pymupdf.open("pdf", converted_svg)
     label[0].set_rotation(90)
-    label.save(f'{output_dir}/{index}')
+    label.save(f'{output_dir}/label({index})')
     label.close()
     barcode_svg_buffer.close()
     # TODO: force gc here ?
