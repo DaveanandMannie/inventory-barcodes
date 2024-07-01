@@ -3,10 +3,10 @@ import functools
 import csv
 import tracemalloc
 
-odoo_pdf: str = 'Picking Operations - S&S Canada - WH_IN_00129.pdf'
-product_csv: str = '../documents/product_code_case.csv'
-csv_output: str = './csv_history'
-label_output: str = './hotfolder'
+odoo_pdf: str = 'tests/Picking Operations - S&S Canada - WH_IN_00129.pdf'
+product_csv: str = 'documents/product_code_case.csv'
+csv_output: str = 'tests/csv_history'
+label_output: str = 'tests/hotfolder'
 
 
 def mem_perf(test_func):
