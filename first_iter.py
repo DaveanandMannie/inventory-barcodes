@@ -26,7 +26,9 @@ def _generate_text(label_data: dict) -> str:
     if label_data['partial']:
         text = f'{label_data['product']}\nPartial: {label_data['in_qty']} Units\n{label_data['in_ref']}\n'
     elif not label_data['known_box_qty']:
-        text = f'{label_data['product']}\nUnknown box Qty: {label_data['in_qty']}\nWH/IN00123\nLet Dave know\n'
+        text = (
+            f'{label_data['product']}\nUnknown box Qty: {label_data['in_qty']}\n{label_data['in_ref']}\nLet Dave know\n'
+        )
     else:
         text = f'{label_data['product']}\n{label_data['box_qty']} Units\n{label_data['in_ref']}\n'
 
