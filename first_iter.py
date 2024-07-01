@@ -1,13 +1,18 @@
+import barcode.writer
 import pymupdf
-from pymupdf import Document
+from pymupdf import Document, Page
 import pandas as pd
 from pandas import DataFrame
 from barcode import Code128
+from barcode.writer import ImageWriter
 import io
 from io import BytesIO
+import csv
+from typing import Optional
 
 
 # this assumes the given pdf is generated from picking operations on odoo 16
+# TODO: create ops;  partial disk writes, full memory buffers; current partial
 def parse_odoo_pdf(receiving_doc: str) -> list[list]:
     doc: Document = pymupdf.open(receiving_doc)
     num_of_pages: int = doc.__len__()
@@ -34,43 +39,118 @@ def left_join(cleaned_data: list, product_export: str, output_file_path: str):
     return
 
 
-def generate_label(output_dir: str, label_data: list, index: int):
-    # label data csv headers: Product,Quantity,Barcode,Case
-    # TODO: use config file for options
-    code: str = label_data[2]
-    writer_options: dict = {
-        'margin_bottom': 45,
-        'margin_top': 25,
-        'quiet_zone': 50,
-        'module_width': 0.7,
-        'module_height': 15.0,
-        'font_size': 25,
-        'text_distance': 10,
-        'human': ''
+def generate_label_data(line_data: list) -> dict:
+    # label data csv headers: Product:str ,Quantity str, Barcode str or int ,box: int
+    # TODO: include the operation id
+    # TODO: do exists checks
+    # this feels like a refactor. Sorry future me :(
+    in_qty: int = int(float(line_data[1].split()[0]))
+    if line_data[3] == '':
+        box_qty: Optional[int] = None
+        known_box_qty: bool = False
+    else:
+        box_qty: Optional[int] = int(float(line_data[3]))
+        known_box_qty: bool = True
+    if known_box_qty:
+        partial: bool = in_qty % box_qty != 0
+    else:
+        partial: bool = False
+    num_boxes: int = 1
+    if line_data[2] == '':
+        code: str = '1234'
+        has_barcode: bool = False
+    else:
+        code: str = str(line_data[2])
+        has_barcode: bool = True
+    if not partial:
+        num_boxes: int = in_qty // box_qty
+    label_data: dict = {
+        'product': line_data[0],
+        'partial': partial,
+        'barcode': code,
+        'in_qty': in_qty,
+        'box_qty': box_qty,
+        'num_boxes': num_boxes,
+        'has_barcode': has_barcode,
+        'known_box_qty': known_box_qty
     }
-    barcode_obj: Code128 = Code128(code)
+    return label_data
+
+
+def generate_label(output_dir: str, label_data: dict):
+    # label data keys: product, partial, barcode, in_qty, box_qty, num boxes
+    # TODO: use config file for options: create func(environ? ) -> dict
+    if label_data['partial']:
+        text = f'''{label_data['product']}\nPartial: {label_data['in_qty']}\nWH/IN00123\n'''
+    else:
+        text = f'''{label_data['product']}\n{label_data['box_qty']} Units\nWH/out00123\n'''
+    writer_options: dict = {
+        'margin_bottom': 1,
+        'margin_top': 1,
+        'quiet_zone': 5,
+        'module_width': 0.4,
+        'module_height': 10.0,
+        'font_size': 5,
+        'text_distance': 2,
+    }
+    barcode_obj: Code128 = Code128(label_data['barcode'], writer=ImageWriter())
     barcode_svg_buffer: BytesIO = io.BytesIO()
-    barcode_svg_buffer.write(barcode_obj.render(writer_options))
+    barcode_obj.write(barcode_svg_buffer, options=writer_options)
     barcode_svg_buffer.seek(0)
 
-    svg_buffer_data: Document = pymupdf.open(stream=barcode_svg_buffer.read())
-    converted_svg: bytes = svg_buffer_data.convert_to_pdf()
-    label: Document = pymupdf.open("pdf", converted_svg)
-    label[0].set_rotation(90)
-    label.save(f'{output_dir}/label({index})')
-    label.close()
+    # TODO: func this out
+    another_pdf: Document = pymupdf.open()
+    another_pdf.insert_page(pno=-1, width=432, height=288)
+    page: Page = another_pdf[0]
+
+    rect_width = page.rect.width * 0.5
+    rect_height = page.rect.height * 0.5
+
+    page_width = page.rect.width
+    x_left = (page_width - rect_width) / 2
+    y_center = 0.7
+    rect = pymupdf.Rect(x_left, y_center, x_left + rect_width, y_center + rect_height)
+    # TODO: func this out
+    text_rect = pymupdf.Rect(0, 144, 432, 288)
+
+    page.insert_textbox(text_rect, text, fontsize=18, align=pymupdf.TEXT_ALIGN_CENTER)
+
+    page.insert_image(rect, stream=barcode_svg_buffer)
+    page.set_rotation(90)
+
+    for i in range(0, label_data['num_boxes']):
+        another_pdf.save(f'{output_dir}/{label_data['product']}-{i + 1}.pdf')
+    another_pdf.close()
     barcode_svg_buffer.close()
     # TODO: force gc here ?
     return
 
 
+# TODO: create logic to handle products without code128; log file -> set to keep track
 
-receiving_file = './documents/whin.pdf'
-product_csv = './documents/product_code_case.csv'
-output_csv = 'temp_test.csv'
-output_label_pdf = 'label_output.pdf'
-sample_code = '9254567890'
-
+# quick and dirty test suite
+receiving_file: str = 'documents/example.pdf'
+product_csv: str = './documents/product_code_case.csv'
+output_csv: str = 'temp_test.csv'
+output_label_pdf: str = './test'
 data = parse_odoo_pdf(receiving_file)
 left_join(data, product_csv, output_csv)
-generate_label(sample_code, output_label_pdf)
+
+# label data csv headers: Product,Quantity,Barcode,Case
+# test_line: list = ["Womens-Triblend-Tee(XL, White-Fleck-Triblend)", '24.00 Units', 884913238824, 72.0]
+# test_line: list = ["BC_6400_Womens-Relaxed-Tee_RM (S, White)",'96.00 Units', 884913108509, 48.0]
+# generate_label(output_dir=output_label_pdf, label_data=generate_label_data(test_line))
+with open('temp_test.csv') as file:
+    reader = csv.reader(file)
+    next(reader)  # skipping headers
+    next(reader)  # skipping headers
+    next(reader)  # skipping headers
+    next(reader)  # skipping headers
+    next(reader)  # skipping headers
+    next(reader)  # skipping headers
+    next(reader)  # skipping headers
+    next(reader)  # skipping headers
+    next(reader)  # skipping headers
+    next(reader)  # skipping headers
+    for line in reader:
+        generate_label(output_label_pdf, generate_label_data(line))

@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.12 (odoo_receiving_barcode)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (odoo_receiving_barcode)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (inventory_labels)" project-jdk-type="Python SDK" />
 </project>
