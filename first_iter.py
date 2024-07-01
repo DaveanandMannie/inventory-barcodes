@@ -168,24 +168,3 @@ def generate_label(output_dir: str, label_data: dict):
     label.close()
     # TODO: force gc here ?
     return
-
-
-# quick and dirty test suite
-# receiving_file: str = 'documents/example.pdf'
-receiving_file: str = 'documents/Picking Operations - S&S Canada - WH_IN_00129.pdf'
-product_csv: str = './documents/product_code_case.csv'
-output_csv_dir: str = './test/'
-output_label_pdf: str = './test'
-data = parse_odoo_pdf(receiving_file)
-output_csv = left_join(data, product_csv, output_csv_dir, receiving_file)
-# label data csv headers: Product,Quantity,Barcode,Case
-test = 'Picking Operations - S&S Canada - WH_IN_00129.pdf'
-# test_line: list = ["BC_8413_Womens-Triblend-Tee_RM (2XL, Charcoal-Black-Triblend)", '144.00 Units', 884913238824, 72.0]
-# test_line: list = ["BC_6400_Womens-Relaxed-Tee_RM (S, White)",'96.00 Units', 884913108509, 48.0]
-# test_line: list = ["BC_3200_Baseball-Tee-3/4_RM (M, White/True-Royal)", '8.00 Units', '', '']
-# generate_label(output_dir=output_label_pdf, label_data=generate_label_data(test_line, test))
-with open(output_csv) as file:
-    reader = csv.reader(file)
-    next(reader)  # skipping headers
-    for line in reader:
-        generate_label(output_label_pdf, generate_label_data(line, test))
