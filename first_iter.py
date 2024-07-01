@@ -6,7 +6,6 @@ from barcode import Code128
 from barcode.writer import ImageWriter
 import io
 from io import BytesIO
-import csv
 from typing import Optional
 
 
@@ -56,6 +55,17 @@ def _place_barcode(page_in_pdf: Page, barcode_str: str, options: dict):
 
 
 def parse_odoo_pdf(receiving_doc: str) -> list[list]:
+    """
+
+    :param:
+        receiving_doc: Path to Odoo's picking operations
+    :return list :
+        list of list
+        - Product : str
+        - Incoming Quantity: str
+        - Barcode : str | int | None
+        - Expected Box Quantity: int | None
+    """
     doc: Document = pymupdf.open(receiving_doc)
     num_of_pages: int = doc.__len__()
     table_list: list = []
@@ -72,11 +82,19 @@ def parse_odoo_pdf(receiving_doc: str) -> list[list]:
     return cleaned_data
 
 
-def left_join(cleaned_data: list, product_export: str, output_file_path: str, receiving_doc: str) -> str:
+def left_join(cleaned_data: list, product_var_export: str, output_file_path: str, receiving_doc: str) -> str:
+    """
+
+    :param list cleaned_data: list of list parsed from a Picking Operations PDF
+    :param str product_var_export: Path to Odoo's product variant export using Display Name and Barcode
+    :param str output_file_path: Path to a folder to keep history of the left joins
+    :param str receiving_doc: Path or name of the Picking Operations PDF
+    :return str: the cleaned file name. reference number in Odoo
+    """
     in_ref: str = receiving_doc.split('-')[-1].rstrip('.pdf').strip()
     filename: str = f'{output_file_path}/{in_ref}.csv'
     cleaned_df: DataFrame = pd.DataFrame(cleaned_data[1:], columns=cleaned_data[0])
-    product_list: DataFrame = pd.read_csv(product_export)
+    product_list: DataFrame = pd.read_csv(product_var_export)
     product_list = product_list.rename(columns={product_list.columns[0]: 'Product'})
     joined: DataFrame = pd.merge(cleaned_df, product_list, on='Product', how='left')
     joined.to_csv(filename, index=False)
@@ -84,8 +102,26 @@ def left_join(cleaned_data: list, product_export: str, output_file_path: str, re
 
 
 def generate_label_data(line_data: list, receiving_doc: str) -> dict:
-    # label data csv headers: Product:str ,Quantity str, Barcode str or int ,box: int
-    # TODO: include the operation id
+    """
+
+    :param list line_data: [
+        Product: str
+        Incoming Quantity: str
+        Barcode: int | str | None
+        Expected Box Quantity: int | None
+        ]
+    :param  str receiving_doc: Path or name of the Picking Operations PDF
+    :return dict:
+        - 'product' str : Display name in Odoo
+        - 'partial' bool : If the full box cannot divide evenly with the in_qty
+        - 'barcode' str : Content to make the Code128 barcode
+        - 'in_qty' int : amount outlined in Picking Operation
+        - 'box_qty' int | None : Number of units a full box
+        - 'num_boxes' int |None :
+        - 'has_barcode' bool : If Odoo has a barcode for the item
+        - 'known_box_qty' Bool: If a box qty exists
+        - 'in_ref' str: reference for Odoo Picking Operation
+    """
     # this feels like a refactor. Sorry future me :(
     inventory_reference: str = receiving_doc.split('-')[-1].rstrip('.pdf').strip()
     in_qty: int = int(float(line_data[1].split()[0]))
@@ -134,7 +170,22 @@ def generate_label_data(line_data: list, receiving_doc: str) -> dict:
     return label_data
 
 
-def generate_label(output_dir: str, label_data: dict):
+def generate_label(hotfolder: str, label_data: dict):
+    """
+
+    :param str hotfolder: path to the hotfolder
+    :param  dict label_data: Created by generate_label_data(*)
+        - 'product' str : Display name in Odoo
+        - 'partial' bool : If the full box cannot divide evenly with the in_qty
+        - 'barcode' str : Content to make the Code128 barcode
+        - 'in_qty' int : amount outlined in Picking Operation
+        - 'box_qty' int | None : Number of units a full box
+        - 'num_boxes' int |None :
+        - 'has_barcode' bool : If Odoo has a barcode for the item
+        - 'known_box_qty' Bool: If a box qty exists
+        - 'in_ref' str: reference for Odoo Picking Operation
+    :return:
+    """
     # label data keys: product, partial, barcode, in_qty, box_qty, num boxes
     # TODO: use config file for options: create func(environ? ) -> dict
     text: str = _generate_text(label_data)
@@ -162,9 +213,9 @@ def generate_label(output_dir: str, label_data: dict):
 
     if label_data['num_boxes'] is not None and not label_data['partial']:
         for i in range(0, label_data['num_boxes']):
-            label.save(f'{output_dir}/{filename}{i + 1}a.pdf')
+            label.save(f'{hotfolder}/{filename}{i + 1}a.pdf')
     else:
-        label.save(f'{output_dir}/{filename}-1.pdf')
+        label.save(f'{hotfolder}/{filename}-1.pdf')
     label.close()
     # TODO: force gc here ?
     return
