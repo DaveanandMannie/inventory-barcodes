@@ -86,7 +86,7 @@ def generate_label(output_dir: str, label_data: dict):
     writer_options: dict = {
         'margin_bottom': 1,
         'margin_top': 1,
-        'quiet_zone': 5,
+        'quiet_zone': 0,
         'module_width': 0.4,
         'module_height': 10.0,
         'font_size': 5,
@@ -111,7 +111,8 @@ def generate_label(output_dir: str, label_data: dict):
     rect = pymupdf.Rect(x_left, y_center, x_left + rect_width, y_center + rect_height)
     # TODO: func this out
     text_rect = pymupdf.Rect(0, 144, 432, 288)
-
+    # 45 chars before line auto line wrap
+    # TODO: create custom line wrap -> wrap the product variants
     page.insert_textbox(text_rect, text, fontsize=18, align=pymupdf.TEXT_ALIGN_CENTER)
 
     page.insert_image(rect, stream=barcode_svg_buffer)
@@ -130,7 +131,7 @@ def generate_label(output_dir: str, label_data: dict):
 # quick and dirty test suite
 receiving_file: str = 'documents/example.pdf'
 product_csv: str = './documents/product_code_case.csv'
-output_csv: str = 'temp_test.csv'
+output_csv: str = './test/temp_test.csv'
 output_label_pdf: str = './test'
 data = parse_odoo_pdf(receiving_file)
 left_join(data, product_csv, output_csv)
@@ -139,7 +140,7 @@ left_join(data, product_csv, output_csv)
 # test_line: list = ["Womens-Triblend-Tee(XL, White-Fleck-Triblend)", '24.00 Units', 884913238824, 72.0]
 # test_line: list = ["BC_6400_Womens-Relaxed-Tee_RM (S, White)",'96.00 Units', 884913108509, 48.0]
 # generate_label(output_dir=output_label_pdf, label_data=generate_label_data(test_line))
-with open('temp_test.csv') as file:
+with open(output_csv) as file:
     reader = csv.reader(file)
     next(reader)  # skipping headers
     next(reader)  # skipping headers
