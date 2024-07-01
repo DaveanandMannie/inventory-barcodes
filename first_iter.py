@@ -1,5 +1,3 @@
-import pprint
-
 import pymupdf
 from pymupdf import Document, Page
 import pandas as pd
@@ -14,6 +12,8 @@ from typing import Optional
 
 # this assumes the given pdf is generated from picking operations on odoo 16
 # TODO: create ops;  partial disk writes, full memory buffers; current partial
+#   logging
+#   proper flow of temp files and i/o dirs
 def _sanitize_filename(filename: str) -> str:
     invalid_chars = '\\/:*?"<>|'
     for char in invalid_chars:
@@ -91,7 +91,7 @@ def generate_label_data(line_data: list, receiving_doc: str) -> dict:
     partial: bool
     code: Optional[str]
     has_barcode: bool
-    # TODO: remove redundancy if any ;)
+    # TODO: remove redundancy if any
     if line_data[3] == '':
         box_qty = None
         known_box_qty = False
@@ -165,8 +165,6 @@ def generate_label(output_dir: str, label_data: dict):
     # TODO: force gc here ?
     return
 
-
-# TODO: create logic to handle products without code128; log file -> set to keep track
 
 # quick and dirty test suite
 # receiving_file: str = 'documents/example.pdf'
