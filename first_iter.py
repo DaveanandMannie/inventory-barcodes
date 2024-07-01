@@ -54,7 +54,7 @@ def _place_barcode(page_in_pdf: Page, barcode_str: str, options: dict):
     return
 
 
-def parse_odoo_pdf(receiving_doc: str) -> list[list]:
+def parse_odoo_pdf(receiving_pdf: str) -> list[list]:
     """
 
     :param:
@@ -66,7 +66,7 @@ def parse_odoo_pdf(receiving_doc: str) -> list[list]:
         - Barcode : str | int | None
         - Expected Box Quantity: int | None
     """
-    doc: Document = pymupdf.open(receiving_doc)
+    doc: Document = pymupdf.open(receiving_pdf)
     num_of_pages: int = doc.__len__()
     table_list: list = []
     for number in range(num_of_pages):
@@ -82,16 +82,16 @@ def parse_odoo_pdf(receiving_doc: str) -> list[list]:
     return cleaned_data
 
 
-def left_join(cleaned_data: list, product_var_export: str, output_file_path: str, receiving_doc: str) -> str:
+def left_join(cleaned_data: list, product_var_export: str, output_file_path: str, receiving_pdf: str) -> str:
     """
 
     :param list cleaned_data: list of list parsed from a Picking Operations PDF
     :param str product_var_export: Path to Odoo's product variant export using Display Name and Barcode
     :param str output_file_path: Path to a folder to keep history of the left joins
-    :param str receiving_doc: Path or name of the Picking Operations PDF
+    :param str receiving_pdf: Path or name of the Picking Operations PDF
     :return str: the cleaned file name. reference number in Odoo
     """
-    in_ref: str = receiving_doc.split('-')[-1].rstrip('.pdf').strip()
+    in_ref: str = receiving_pdf.split('-')[-1].rstrip('.pdf').strip()
     filename: str = f'{output_file_path}/{in_ref}.csv'
     cleaned_df: DataFrame = pd.DataFrame(cleaned_data[1:], columns=cleaned_data[0])
     product_list: DataFrame = pd.read_csv(product_var_export)
@@ -101,7 +101,7 @@ def left_join(cleaned_data: list, product_var_export: str, output_file_path: str
     return filename
 
 
-def generate_label_data(line_data: list, receiving_doc: str) -> dict:
+def generate_label_data(line_data: list, receiving_pdf: str) -> dict:
     """
 
     :param list line_data: [
@@ -110,7 +110,7 @@ def generate_label_data(line_data: list, receiving_doc: str) -> dict:
         Barcode: int | str | None
         Expected Box Quantity: int | None
         ]
-    :param  str receiving_doc: Path or name of the Picking Operations PDF
+    :param  str receiving_pdf: Path or name of the Picking Operations PDF
     :return dict:
         - 'product' str : Display name in Odoo
         - 'partial' bool : If the full box cannot divide evenly with the in_qty
@@ -123,7 +123,7 @@ def generate_label_data(line_data: list, receiving_doc: str) -> dict:
         - 'in_ref' str: reference for Odoo Picking Operation
     """
     # this feels like a refactor. Sorry future me :(
-    inventory_reference: str = receiving_doc.split('-')[-1].rstrip('.pdf').strip()
+    inventory_reference: str = receiving_pdf.split('-')[-1].rstrip('.pdf').strip()
     in_qty: int = int(float(line_data[1].split()[0]))
     num_boxes: Optional[int]
     box_qty: Optional[int]
