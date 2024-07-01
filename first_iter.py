@@ -1,4 +1,3 @@
-import barcode.writer
 import pymupdf
 from pymupdf import Document, Page
 import pandas as pd
