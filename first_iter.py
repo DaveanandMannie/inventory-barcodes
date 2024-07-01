@@ -72,13 +72,15 @@ def parse_odoo_pdf(receiving_doc: str) -> list[list]:
     return cleaned_data
 
 
-def left_join(cleaned_data: list, product_export: str, output_file_path: str):
+def left_join(cleaned_data: list, product_export: str, output_file_path: str, receiving_doc: str) -> str:
+    in_ref: str = receiving_doc.split('-')[-1].rstrip('.pdf').strip()
+    filename: str = f'{output_file_path}/{in_ref}.csv'
     cleaned_df: DataFrame = pd.DataFrame(cleaned_data[1:], columns=cleaned_data[0])
     product_list: DataFrame = pd.read_csv(product_export)
     product_list = product_list.rename(columns={product_list.columns[0]: 'Product'})
     joined: DataFrame = pd.merge(cleaned_df, product_list, on='Product', how='left')
-    joined.to_csv(output_file_path, index=False)
-    return
+    joined.to_csv(filename, index=False)
+    return filename
 
 
 def generate_label_data(line_data: list, receiving_doc: str) -> dict:
@@ -172,10 +174,10 @@ def generate_label(output_dir: str, label_data: dict):
 # receiving_file: str = 'documents/example.pdf'
 receiving_file: str = 'documents/Picking Operations - S&S Canada - WH_IN_00129.pdf'
 product_csv: str = './documents/product_code_case.csv'
-output_csv: str = './test/temp_test.csv'
+output_csv_dir: str = './test/'
 output_label_pdf: str = './test'
 data = parse_odoo_pdf(receiving_file)
-left_join(data, product_csv, output_csv)
+output_csv = left_join(data, product_csv, output_csv_dir, receiving_file)
 # label data csv headers: Product,Quantity,Barcode,Case
 test = 'Picking Operations - S&S Canada - WH_IN_00129.pdf'
 # test_line: list = ["BC_8413_Womens-Triblend-Tee_RM (2XL, Charcoal-Black-Triblend)", '144.00 Units', 884913238824, 72.0]
