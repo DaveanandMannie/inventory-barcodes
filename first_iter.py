@@ -37,6 +37,7 @@ def _generate_text(label_data: dict) -> str:
     return text
 
 
+# noinspection PyUnresolvedReferences
 def _place_barcode(page_in_pdf: Page, barcode_str: str, options: dict):
     barcode_obj: Code128 = Code128(barcode_str, writer=ImageWriter())
     barcode_svg_buffer: BytesIO = io.BytesIO()
@@ -170,6 +171,7 @@ def generate_label_data(line_data: list, receiving_pdf: str) -> dict:
     return label_data
 
 
+# noinspection PyUnresolvedReferences
 def generate_label(hotfolder: str, label_data: dict):
     """
 
