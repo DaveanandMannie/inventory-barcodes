@@ -132,7 +132,6 @@ def generate_label_data(line_data: list, receiving_pdf: str) -> dict:
     partial: bool
     code: Optional[str]
     has_barcode: bool
-    # TODO: remove redundancy if any
     if line_data[3] == '':
         box_qty = None
         known_box_qty = False

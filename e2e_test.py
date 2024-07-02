@@ -1,4 +1,6 @@
-from first_iter import parse_odoo_pdf, left_join, generate_label, generate_label_data
+import pprint
+
+from odoogen import parse_odoo_pdf, left_join, generate_label, generate_label_data
 import functools
 import csv
 import tracemalloc
@@ -20,7 +22,7 @@ def print_memory_usage(test_func):
             f'Memory Usage : {str(test_func)}\n'
             f'=====================================================================\n'
             f'Current:\n    {current / 10 ** 6}MB\n'
-            f'Peak:\n    {peak / 10 ** 6}MB'
+            f'Peak:\n    {peak / 10 ** 6}MB\n'
         )
         print(std_out)
         return result
@@ -43,7 +45,7 @@ def full_test(receiving_file: str, product_var_csv: str, label_output_dir: str, 
 
 # I think this will be in the GUI portion ?
 @print_memory_usage
-def store_label_data(receiving_file: str, product_var_csv: str, csv_output_dir: str):
+def store_label_data(receiving_file: str, product_var_csv: str, csv_output_dir: str, verbose: bool = False):
     receiving_data: str = left_join(parse_odoo_pdf(receiving_file), product_var_csv, csv_output_dir, receiving_file)
     labels: list[dict] = []
     with open(receiving_data) as file:
@@ -52,7 +54,8 @@ def store_label_data(receiving_file: str, product_var_csv: str, csv_output_dir: 
         for line in reader:
             test_dict: dict = generate_label_data(line, receiving_file)
             labels.append(test_dict)
-    print(labels)
+    if verbose:
+        pprint.pprint(labels)
 
 
 full_test(odoo_pdf, product_csv, label_output, csv_output)
