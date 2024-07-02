@@ -41,9 +41,19 @@ def full_test(receiving_file: str, product_var_csv: str, label_output_dir: str, 
     return
 
 
+# I think this will be in the GUI portion ?
 @print_memory_usage
-def store_label_data(receiving_file:str):
-    pass
+def store_label_data(receiving_file: str, product_var_csv: str, csv_output_dir: str):
+    receiving_data: str = left_join(parse_odoo_pdf(receiving_file), product_var_csv, csv_output_dir, receiving_file)
+    labels: list[dict] = []
+    with open(receiving_data) as file:
+        reader: csv.reader = csv.reader(file)
+        next(reader)
+        for line in reader:
+            test_dict: dict = generate_label_data(line, receiving_file)
+            labels.append(test_dict)
+    print(labels)
 
 
 full_test(odoo_pdf, product_csv, label_output, csv_output)
+store_label_data(odoo_pdf, product_csv, csv_output)
