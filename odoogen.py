@@ -10,9 +10,6 @@ from typing import Optional
 
 
 # this assumes the given pdf is generated from picking operations on odoo 16
-# TODO: create ops;  partial disk writes, full memory buffers; current partial
-#   logging
-#   proper flow of temp files and i/o dirs
 def _sanitize_filename(filename: str) -> str:
     invalid_chars = '\\/:*?"<>|'
     for char in invalid_chars:
@@ -187,7 +184,6 @@ def generate_label(hotfolder: str, label_data: dict):
         - 'in_ref' str: reference for Odoo Picking Operation
     :return:
     """
-    # label data keys: product, partial, barcode, in_qty, box_qty, num boxes
     # TODO: use config file for options: create func(environ? ) -> dict
     text: str = _generate_text(label_data)
     writer_options: dict = {
@@ -218,5 +214,4 @@ def generate_label(hotfolder: str, label_data: dict):
     else:
         label.save(f'{hotfolder}/{filename}-1.pdf')
     label.close()
-    # TODO: force gc here ?
     return
