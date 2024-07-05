@@ -26,9 +26,7 @@ class PDFFrame(CTkFrame):
         self.reset_button = CTkButton(self, text='Reset', fg_color='red', command=self.reset_pdf)
         self.reset_button.grid(row=0, column=2)
 
-        self.select_pdf_button = CTkButton(
-            self, text='Select Odoo PDF', command=self._select_receiving_pdf
-        )
+        self.select_pdf_button = CTkButton( self, text='Select Odoo PDF', command=self._select_receiving_pdf)
         self.select_pdf_button.grid(row=0, column=3, padx=50, pady=20, ipadx=5, ipady=5, sticky='e')
 
     def _select_receiving_pdf(self):
