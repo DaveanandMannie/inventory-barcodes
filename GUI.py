@@ -1,9 +1,16 @@
-import customtkinter
-from customtkinter import CTkButton, filedialog, CTkLabel, StringVar
+from customtkinter import CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk
 
 
 # TODO: Create a global font object
-class PDFFrame(customtkinter.CTkFrame):
+
+class Frame(CTkFrame):
+    def __init__(self, master):
+        super().__init__(master)
+        self.hotfolder_label = CTkLabel(self, textvariable=master.hotfolder_path)
+        self.hotfolder_label.pack()
+
+
+class PDFFrame(CTkFrame):
     def __init__(self, master):
         super().__init__(master)
         self.grid_columnconfigure(index=1, weight=2)
@@ -20,11 +27,11 @@ class PDFFrame(customtkinter.CTkFrame):
         self.reset_button.grid(row=0, column=2)
 
         self.select_pdf_button = CTkButton(
-            self, text='Select Odoo PDF', command=self.select_receiving_pdf
+            self, text='Select Odoo PDF', command=self._select_receiving_pdf
         )
         self.select_pdf_button.grid(row=0, column=3, padx=50, pady=20, ipadx=5, ipady=5, sticky='e')
 
-    def select_receiving_pdf(self):
+    def _select_receiving_pdf(self):
         file_path: str = filedialog.askopenfilename()
         if file_path:
             self.selected_file.set(file_path)
@@ -34,16 +41,29 @@ class PDFFrame(customtkinter.CTkFrame):
         self.selected_file.set(self.default_pdf)
 
 
-class App(customtkinter.CTk):
+class App(CTk):
     def __init__(self):
         super().__init__()
-
+        self._set_appearance_mode('dark')
         self.title('Receiving Barcode Generator')
+
         self.geometry("1080x720")
         self.PDFFrame = PDFFrame(self)
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=2)
         self.grid_columnconfigure(index=1, weight=1)
-        self._set_appearance_mode('dark')
+
+        # TODO: get from config file? json? yaml? txt? fully 256bit encrypted tarball?
+        self.hotfolder_path: StringVar = StringVar(value='C:Desktop/whiteboard')
+        self._default_pdf_dir: StringVar = StringVar()
+
+        self.test_frame = Frame(self)
+        self.test_frame.grid(row=1)
+
+    def _select_hotfolder(self):
+        hotfolder_path: str = filedialog.askdirectory(initialdir=self.hotfolder_path.get())
+        if hotfolder_path:
+            self.hotfolder_path.set(hotfolder_path)
+        return
 
 
 app = App()
