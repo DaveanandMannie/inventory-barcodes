@@ -1,6 +1,8 @@
 from customtkinter import CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk
 from odoogen import *
 from e2e_test import print_memory_usage
+
+
 # TODO: Create a global font object
 class PDFFrame(CTkFrame):
     def __init__(self, master):
@@ -31,6 +33,7 @@ class PDFFrame(CTkFrame):
         self.selected_file.set(self.default_pdf)
 
 
+# TODO: create a config pop up with a password
 class Frame(CTkFrame):
     def __init__(self, master):
         super().__init__(master)
@@ -43,9 +46,20 @@ class Frame(CTkFrame):
         self.odoo_ref_label.grid(row=1, column=0, padx=20, pady=10)
         self.effective_hotfolder_label = CTkLabel(self, textvariable=master.odoo_ref, wraplength=200)
         self.effective_hotfolder_label.grid(row=1, column=1, padx=20, pady=10)
+        # TODO: commands -> odoo-gen
+        self.generate_button = CTkButton(self, text='Generate Labels', fg_color='grey', hover_color='green')
+        self.generate_button.grid(row=2, columnspan=2, padx=20, pady=20, ipadx=20, ipady=20, sticky='ew')
+
+        self.config_button = CTkButton(self, text='Edit Config')
+        self.config_button.grid(row=3, column=0, padx=20, pady=20, ipadx=5, ipady=5, sticky='w')
+        # TODO: decide what to show in the config tile subspace
+
+        self.csv_dir_label = CTkLabel(self, text='CSV History:')
+        self.csv_dir_label.grid(row=4, column=0, padx=20, pady=10)
+        self.effective_csv_dir = CTkLabel(self, textvariable=master.joined_csv_dir, wraplength=200)
+        self.effective_csv_dir.grid(row=4, column=1, padx=20, pady=20, ipadx=5, ipady=5, sticky='e')
 
 
-# TODO: create a config pop up with a password
 @print_memory_usage
 class App(CTk):
     def __init__(self):
@@ -61,16 +75,10 @@ class App(CTk):
         self.PDFFrame = PDFFrame(self)
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=3)
 
-
-
-        self.generate_button = CTkButton(self, text='Generate Labels')
-        self.generate_button.grid(row=1, column=1)
-
-
-
         # TODO: get from config file? json? yaml? txt? fully 256bit encrypted tarball? Jia Tan will get my pay :(
         self.hotfolder_path: StringVar = StringVar(value='E:/PrintGeek/inventory-barcodes/test_targets/hotfolder')
-        self._default_pdf_dir: StringVar = StringVar()
+        self._default_pdf_dir: StringVar = StringVar(value='C:/user/brothers/downloads')
+        self.joined_csv_dir: StringVar = StringVar(value='E:/PrintGeek/inventory-barcodes/test_targets/csv_temp')
 
         # TODO: get from odoo-gen
         self.odoo_ref: StringVar = StringVar(value='WH/IN/00014')
