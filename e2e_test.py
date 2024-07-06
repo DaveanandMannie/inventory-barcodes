@@ -29,7 +29,7 @@ def print_memory_usage(test_func):
         )
         SUM_MEMORY += peak
         print(std_out)
-        print(f'Running total: {SUM_MEMORY / 10 ** 6}MB')
+        print(f'Running total:{SUM_MEMORY / 10 ** 6}MB')
         return result
 
     return wrapper
@@ -65,3 +65,4 @@ def store_label_data(receiving_file: str, product_var_csv: str, csv_output_dir: 
 
 full_test(odoo_pdf, product_csv, label_output, csv_output)
 store_label_data(odoo_pdf, product_csv, csv_output)
+print(f'Running total: {SUM_MEMORY / 10 ** 6}MB')
