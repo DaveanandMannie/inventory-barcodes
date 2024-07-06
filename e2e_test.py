@@ -10,10 +10,13 @@ product_csv: str = 'documents/product_code_case.csv'
 csv_output: str = 'test_targets/csv_history'
 label_output: str = 'test_targets/hotfolder'
 
+SUM_MEMORY: float = 0.0
+
 
 def print_memory_usage(test_func):
     @functools.wraps(test_func)
     def wrapper(*args, **kwargs):
+        global SUM_MEMORY
         tracemalloc.start()
         result = test_func(*args, **kwargs)
         current, peak = tracemalloc.get_traced_memory()
@@ -24,7 +27,9 @@ def print_memory_usage(test_func):
             f'Current:\n    {current / 10 ** 6}MB\n'
             f'Peak:\n    {peak / 10 ** 6}MB\n'
         )
+        SUM_MEMORY += peak
         print(std_out)
+        print(f'Running total:{SUM_MEMORY / 10 ** 6}MB')
         return result
 
     return wrapper
@@ -35,7 +40,7 @@ def full_test(receiving_file: str, product_var_csv: str, label_output_dir: str, 
     data: list = parse_odoo_pdf(receiving_file)
     receiving_data: str = left_join(data, product_var_csv, csv_output_dir, receiving_file)
     with open(receiving_data) as file:
-        reader: csv.reader = csv.reader(file)
+        reader = csv.reader(file)
         next(reader)  # skipping headers
         for line in reader:
             label_data: dict = generate_label_data(line, receiving_file)
@@ -49,7 +54,7 @@ def store_label_data(receiving_file: str, product_var_csv: str, csv_output_dir: 
     receiving_data: str = left_join(parse_odoo_pdf(receiving_file), product_var_csv, csv_output_dir, receiving_file)
     labels: list[dict] = []
     with open(receiving_data) as file:
-        reader: csv.reader = csv.reader(file)
+        reader = csv.reader(file)
         next(reader)
         for line in reader:
             test_dict: dict = generate_label_data(line, receiving_file)
@@ -60,3 +65,4 @@ def store_label_data(receiving_file: str, product_var_csv: str, csv_output_dir: 
 
 full_test(odoo_pdf, product_csv, label_output, csv_output)
 store_label_data(odoo_pdf, product_csv, csv_output)
+print(f'Running total: {SUM_MEMORY / 10 ** 6}MB')

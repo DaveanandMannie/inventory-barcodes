@@ -210,7 +210,7 @@ def generate_label(hotfolder: str, label_data: dict):
 
     if label_data['num_boxes'] is not None and not label_data['partial']:
         for i in range(0, label_data['num_boxes']):
-            label.save(f'{hotfolder}/{filename}{i + 1}a.pdf')
+            label.save(f'{hotfolder}/{filename}{i + 1}.pdf')
     else:
         label.save(f'{hotfolder}/{filename}-1.pdf')
     label.close()
