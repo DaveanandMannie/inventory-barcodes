@@ -10,8 +10,9 @@ product_csv: str = 'documents/product_code_case.csv'
 csv_output: str = 'test_targets/csv_history'
 label_output: str = 'test_targets/hotfolder'
 
-
 SUM_MEMORY: float = 0.0
+
+
 def print_memory_usage(test_func):
     @functools.wraps(test_func)
     def wrapper(*args, **kwargs):
@@ -65,4 +66,3 @@ def store_label_data(receiving_file: str, product_var_csv: str, csv_output_dir: 
 full_test(odoo_pdf, product_csv, label_output, csv_output)
 store_label_data(odoo_pdf, product_csv, csv_output)
 print(f'Running total: {SUM_MEMORY / 10 ** 6}MB')
-
