@@ -11,9 +11,11 @@ csv_output: str = 'test_targets/csv_history'
 label_output: str = 'test_targets/hotfolder'
 
 
+SUM_MEMORY: float = 0.0
 def print_memory_usage(test_func):
     @functools.wraps(test_func)
     def wrapper(*args, **kwargs):
+        global SUM_MEMORY
         tracemalloc.start()
         result = test_func(*args, **kwargs)
         current, peak = tracemalloc.get_traced_memory()
@@ -24,7 +26,9 @@ def print_memory_usage(test_func):
             f'Current:\n    {current / 10 ** 6}MB\n'
             f'Peak:\n    {peak / 10 ** 6}MB\n'
         )
+        SUM_MEMORY += peak
         print(std_out)
+        print(f'Running total:{SUM_MEMORY / 10 ** 6}MB')
         return result
 
     return wrapper
@@ -60,3 +64,5 @@ def store_label_data(receiving_file: str, product_var_csv: str, csv_output_dir: 
 
 full_test(odoo_pdf, product_csv, label_output, csv_output)
 store_label_data(odoo_pdf, product_csv, csv_output)
+print(f'Running total: {SUM_MEMORY / 10 ** 6}MB')
+
