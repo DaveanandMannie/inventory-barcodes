@@ -1,6 +1,10 @@
 from customtkinter import CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk
 from odoogen import *
 from e2e_test import print_memory_usage
+import json
+
+with open('./documents/test_config.json') as file:
+    config: dict = json.load(file)
 
 
 # TODO: Create a global font object
@@ -24,7 +28,7 @@ class PDFFrame(CTkFrame):
         self.select_pdf_button.grid(row=0, column=3, padx=20, pady=20, ipadx=5, ipady=5, sticky='e')
 
     def _select_receiving_pdf(self):
-        file_path: str = filedialog.askopenfilename()
+        file_path: str = filedialog.askopenfilename(initialdir=self.master.default_pdf_dir.get())
         if file_path:
             self.selected_file.set(file_path)
         return
@@ -34,12 +38,12 @@ class PDFFrame(CTkFrame):
 
 
 # TODO: create a config pop up with a password
-class Frame(CTkFrame):
+class ConfigFrame(CTkFrame):
     def __init__(self, master):
         super().__init__(master)
         self.hotfolder_label = CTkLabel(self, text='Current Hotfolder:')
         self.hotfolder_label.grid(row=0, column=0, padx=20, pady=10)
-        self.effective_hotfolder_label = CTkLabel(self, textvariable=master.hotfolder_path, wraplength=200)
+        self.effective_hotfolder_label = CTkLabel(self, textvariable=master.hotfolder_dir, wraplength=200)
         self.effective_hotfolder_label.grid(row=0, column=1, padx=20, pady=10)
 
         self.odoo_ref_label = CTkLabel(self, text='Odoo Reference:')
@@ -62,11 +66,12 @@ class Frame(CTkFrame):
 
 @print_memory_usage
 class App(CTk):
-    def __init__(self):
+    def __init__(self, config_file: dict):
         super().__init__()
         self._set_appearance_mode('dark')
         self.title('Receiving Barcode Generator')
         self.geometry("1080x720")
+        self.config = config_file
 
         self.grid_columnconfigure(index=0, weight=1)
         self.grid_columnconfigure(index=1, weight=1)
@@ -75,23 +80,24 @@ class App(CTk):
         self.PDFFrame = PDFFrame(self)
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=3)
 
-        # TODO: get from config file? json? yaml? txt? fully 256bit encrypted tarball? Jia Tan will get my pay :(
-        self.hotfolder_path: StringVar = StringVar(value='E:/PrintGeek/inventory-barcodes/test_targets/hotfolder')
-        self._default_pdf_dir: StringVar = StringVar(value='C:/user/brothers/downloads')
-        self.joined_csv_dir: StringVar = StringVar(value='E:/PrintGeek/inventory-barcodes/test_targets/csv_temp')
+        self.hotfolder_dir: StringVar = StringVar(value=self.config['hotfolder_dir'])
+        self.default_pdf_dir: StringVar = StringVar(value=self.config['default_pdf_dir'])
+        self.joined_csv_dir: StringVar = StringVar(value=self.config['csv_history_dir'])
+        self.product_var_csv: StringVar = StringVar(value=self.config['product_var_csv'])
 
         # TODO: get from odoo-gen
         self.odoo_ref: StringVar = StringVar(value='WH/IN/00014')
 
-        self.test_frame = Frame(self)
-        self.test_frame.grid(row=1, column=2, padx=20, sticky='e')
+        self.config_frame = ConfigFrame(self)
+        self.config_frame.grid(row=1, column=2, padx=20, sticky='e')
 
     def _select_hotfolder(self):
-        hotfolder_path: str = filedialog.askdirectory(initialdir=self.hotfolder_path.get())
-        if hotfolder_path:
-            self.hotfolder_path.set(hotfolder_path)
+        hotfolder_dir: str = filedialog.askdirectory(initialdir=self.hotfolder_dir.get())
+        if hotfolder_dir:
+            self.hotfolder_dir.set(hotfolder_dir)
         return
 
 
-app = App()
-app.mainloop()
+if __name__ == "__main__":
+    app = App(config)
+    app.mainloop()
