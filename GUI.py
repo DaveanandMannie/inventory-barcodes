@@ -55,7 +55,7 @@ class PDFFrame(CTkFrame):
 
 
 # TODO: create a config pop up with a password
-class ConfigFrame(CTkFrame):
+class OperationFrame(CTkFrame):
     def __init__(self, master):
         super().__init__(master)
         self.hotfolder_label = CTkLabel(self, text='Current Hotfolder:')
@@ -104,7 +104,7 @@ class App(CTk):
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=3)
         self.PDFFrame.register_callback(self.store_label_data)
 
-        self.config_frame = ConfigFrame(self)
+        self.config_frame = OperationFrame(self)
         self.config_frame.grid(row=1, column=2, padx=20, sticky='e')
 
     def _select_hotfolder(self):
