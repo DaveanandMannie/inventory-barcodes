@@ -9,6 +9,7 @@ from io import BytesIO
 from typing import Optional
 import csv
 
+
 # this assumes the given pdf is generated from picking operations on odoo 16
 def _sanitize_filename(filename: str) -> str:
     invalid_chars = '\\/:*?"<>|'
@@ -99,7 +100,7 @@ def left_join(cleaned_data: list, product_var_export: str, output_file_path: str
     return filename
 
 
-def _generate_label_data(line_data: list, receiving_pdf: str) -> dict:
+def generate_label_data(line_data: list, receiving_pdf: str) -> dict:
     """
 
     :param list line_data: [
@@ -179,7 +180,7 @@ def generate_all_label_data(joined_csv: str, receiving_pdf: str) -> list[dict]:
         reader = csv.reader(csv_file)
         next(reader)
         for line in reader:
-            all_barcode_data.append(_generate_label_data(line, receiving_pdf))
+            all_barcode_data.append(generate_label_data(line, receiving_pdf))
     return all_barcode_data
 
 
