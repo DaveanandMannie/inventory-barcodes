@@ -70,13 +70,16 @@ class OperationFrame(CTkFrame):
         self.hotfolder_label.grid(row=0, column=0, padx=20, pady=10)
         self.effective_hotfolder_label = CTkLabel(self, textvariable=master.hotfolder_dir, wraplength=200)
         self.effective_hotfolder_label.grid(row=0, column=1, padx=20, pady=10)
+        self.gen_button_callbacks: list = []
 
         self.odoo_ref_label = CTkLabel(self, text='Odoo Reference:')
         self.odoo_ref_label.grid(row=1, column=0, padx=20, pady=10)
         self.effective_hotfolder_label = CTkLabel(self, textvariable=master.odoo_ref, wraplength=200)
         self.effective_hotfolder_label.grid(row=1, column=1, padx=20, pady=10)
-        # TODO: commands -> odoo-gen
-        self.generate_button = CTkButton(self, text='Generate Labels', fg_color='grey', hover=False)
+
+        self.generate_button = CTkButton(
+            self, text='Generate Labels', fg_color='grey', hover=False, command=self._execute_gen_button_callbacks
+        )
         self.generate_button.grid(row=2, columnspan=2, padx=20, pady=20, ipadx=20, ipady=20, sticky='ew')
 
         self.config_button = CTkButton(self, text='Edit Config')
@@ -87,6 +90,16 @@ class OperationFrame(CTkFrame):
         self.csv_dir_label.grid(row=4, column=0, padx=20, pady=10)
         self.effective_csv_dir = CTkLabel(self, textvariable=master.joined_csv_dir, wraplength=200)
         self.effective_csv_dir.grid(row=4, column=1, padx=20, pady=20, ipadx=5, ipady=5, sticky='e')
+
+    def register_gen_button_callback(self, callback: Callable):
+        """Register call back to be executed when a file is selected"""
+        self.gen_button_callbacks.append(callback)
+        return
+
+    def _execute_gen_button_callbacks(self):
+        for callback in self.gen_button_callbacks:
+            callback()
+        return
 
     def active_gen_button(self, *args):
         _ = args
@@ -120,14 +133,16 @@ class App(CTk):
 
         self.PDFFrame = PDFFrame(self)
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=3)
+
+        self.OperationFrame = OperationFrame(self)
+        self.OperationFrame.grid(row=1, column=2, padx=20, sticky='e')
+
+        # call back registry
+        self.PDFFrame.register_select_callback(self.OperationFrame.active_gen_button)
         self.PDFFrame.register_select_callback(self.store_label_data)
+        self.PDFFrame.register_reset_callback(self.OperationFrame.default_gen_button)
         self.PDFFrame.register_reset_callback(self.reset_odoo_ref)
-
-        self.config_frame = OperationFrame(self)
-        self.config_frame.grid(row=1, column=2, padx=20, sticky='e')
-
-        self.PDFFrame.register_select_callback(self.config_frame.active_gen_button)
-        self.PDFFrame.register_reset_callback(self.config_frame.default_gen_button)
+        self.OperationFrame.register_gen_button_callback(self.generate_all_labels)
 
     def _select_hotfolder(self):
         hotfolder_dir: str = filedialog.askdirectory(initialdir=self.hotfolder_dir.get())
@@ -151,6 +166,12 @@ class App(CTk):
     def reset_odoo_ref(self):
         self.odoo_ref.set('No file selected')
         return
+
+    def generate_all_labels(self):
+        for label_dict in self.label_data:
+            generate_label(hotfolder=self.hotfolder_dir.get(), label_data=label_dict)
+        return
+
 
 if __name__ == "__main__":
     app = App(config)
