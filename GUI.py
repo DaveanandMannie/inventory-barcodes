@@ -1,4 +1,3 @@
-import csv
 from customtkinter import CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk
 from odoogen import *
 from e2e_test import print_memory_usage
@@ -91,6 +90,11 @@ class App(CTk):
         self.geometry("1080x720")
         self.config: dict = config_file
         self.label_data: list[dict] = []
+        self.hotfolder_dir: StringVar = StringVar(value=self.config['hotfolder_dir'])
+        self.default_pdf_dir: StringVar = StringVar(value=self.config['default_pdf_dir'])
+        self.joined_csv_dir: StringVar = StringVar(value=self.config['csv_history_dir'])
+        self.product_var_csv: StringVar = StringVar(value=self.config['product_var_csv'])
+        self.odoo_ref: StringVar = StringVar(value='No file selected')
 
         self.grid_columnconfigure(index=0, weight=1)
         self.grid_columnconfigure(index=1, weight=1)
@@ -99,14 +103,6 @@ class App(CTk):
         self.PDFFrame = PDFFrame(self)
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=3)
         self.PDFFrame.register_callback(self.store_label_data)
-
-        self.hotfolder_dir: StringVar = StringVar(value=self.config['hotfolder_dir'])
-        self.default_pdf_dir: StringVar = StringVar(value=self.config['default_pdf_dir'])
-        self.joined_csv_dir: StringVar = StringVar(value=self.config['csv_history_dir'])
-        self.product_var_csv: StringVar = StringVar(value=self.config['product_var_csv'])
-
-        # TODO: get from odoo-gen
-        self.odoo_ref: StringVar = StringVar(value='No file selected')
 
         self.config_frame = ConfigFrame(self)
         self.config_frame.grid(row=1, column=2, padx=20, sticky='e')
@@ -120,20 +116,14 @@ class App(CTk):
     def store_label_data(self, file_path):
         data: list = parse_odoo_pdf(file_path)
 
-        receiving_data: str = left_join(
+        joined_csv: str = left_join(
             cleaned_data=data,
             product_var_export=self.product_var_csv.get(),
             output_file_path=self.joined_csv_dir.get(),
             receiving_pdf=file_path
         )
-        # TODO  decide weather to add this functionality to odoo-gen -> probably
-        with open(receiving_data) as csv_file:
-            reader = csv.reader(csv_file)
-            next(reader)
-            for line in reader:
-                label_dict: dict = generate_label_data(line, file_path)
-                self.label_data.append(label_dict)
-            self.odoo_ref.set(self.label_data[0]['in_ref'])
+        self.label_data = generate_all_label_data(joined_csv, file_path)
+        self.odoo_ref.set(self.label_data[0]['in_ref'])
         return
 
 
