@@ -7,7 +7,7 @@ from barcode.writer import ImageWriter
 import io
 from io import BytesIO
 from typing import Optional
-
+import csv
 
 # this assumes the given pdf is generated from picking operations on odoo 16
 def _sanitize_filename(filename: str) -> str:
@@ -99,7 +99,7 @@ def left_join(cleaned_data: list, product_var_export: str, output_file_path: str
     return filename
 
 
-def generate_label_data(line_data: list, receiving_pdf: str) -> dict:
+def _generate_label_data(line_data: list, receiving_pdf: str) -> dict:
     """
 
     :param list line_data: [
@@ -165,6 +165,22 @@ def generate_label_data(line_data: list, receiving_pdf: str) -> dict:
         'in_ref': inventory_reference
     }
     return label_data
+
+
+def generate_all_label_data(joined_csv: str, receiving_pdf: str) -> list[dict]:
+    """
+
+    :param joined_csv: file path pointing to a file created by the left join func
+    :param receiving_pdf: file path pointing to Odoo Picking Operations PDF
+    :return list of dicts of label data:
+    """
+    all_barcode_data: list[dict] = []
+    with open(joined_csv) as csv_file:
+        reader = csv.reader(csv_file)
+        next(reader)
+        for line in reader:
+            all_barcode_data.append(_generate_label_data(line, receiving_pdf))
+    return all_barcode_data
 
 
 # noinspection PyUnresolvedReferences
