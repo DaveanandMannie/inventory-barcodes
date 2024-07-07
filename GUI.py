@@ -15,7 +15,8 @@ class PDFFrame(CTkFrame):
         self.grid_columnconfigure(index=1, weight=2)
         self.default_pdf: str = 'No file selected'
         self.selected_file = StringVar(value=self.default_pdf)
-        self.callbacks: list = []  # depending on how I control data flow I might back this a static function
+        self.select_callbacks: list = []
+        self.reset_callbacks: list = []
 
         self.file_frame_label = CTkLabel(self, text='"Picking Operations" PDF:', font=('consolas', 19, 'bold'))
         self.file_frame_label.grid(row=0, column=0, sticky='nsew', padx=20)
@@ -23,7 +24,9 @@ class PDFFrame(CTkFrame):
         self.selected_pdf_label = CTkLabel(self, textvariable=self.selected_file, wraplength=350)
         self.selected_pdf_label.grid(row=0, column=1, sticky='nsew', padx=20)
 
-        self.reset_button = CTkButton(self, text='Reset', fg_color='red', command=self.reset_pdf)
+        self.reset_button = CTkButton(
+            self, text='Reset', fg_color='red', hover_color='darkred', command=self._execute_reset_callbacks
+        )
         self.reset_button.grid(row=0, column=2)
 
         self.select_pdf_button = CTkButton(self, text='Select Odoo PDF', command=self._select_receiving_pdf)
@@ -33,24 +36,29 @@ class PDFFrame(CTkFrame):
         file_path: str = filedialog.askopenfilename(initialdir=self.master.default_pdf_dir.get())
         if file_path:
             self.selected_file.set(file_path)
-            self._execute_callbacks(file_path)
+            self._execute_select_callbacks(file_path)
         return
 
-    def register_callback(self, callback: Callable):
+    def register_select_callback(self, callback: Callable):
         """Register call back to be executed when a file is selected"""
-        self.callbacks.append(callback)
+        self.select_callbacks.append(callback)
         return
 
-    def _execute_callbacks(self, file_path: str):
-        """Execute all registered call backs"""
-        for callback in self.callbacks:
+    def register_reset_callback(self, callback: Callable):
+        self.reset_callbacks.append(callback)
+        return
+
+    def _execute_select_callbacks(self, file_path: str):
+        """Execute all registered select call backs"""
+        for callback in self.select_callbacks:
             callback(file_path)
         return
 
     # TODO: Callback? :(
-    def reset_pdf(self):
+    def _execute_reset_callbacks(self):
         self.selected_file.set(self.default_pdf)
-        self.master.odoo_ref.set(self.default_pdf)
+        for callback in self.reset_callbacks:
+            callback()
         return
 
 
@@ -68,7 +76,7 @@ class OperationFrame(CTkFrame):
         self.effective_hotfolder_label = CTkLabel(self, textvariable=master.odoo_ref, wraplength=200)
         self.effective_hotfolder_label.grid(row=1, column=1, padx=20, pady=10)
         # TODO: commands -> odoo-gen
-        self.generate_button = CTkButton(self, text='Generate Labels', fg_color='grey', hover_color='green')
+        self.generate_button = CTkButton(self, text='Generate Labels', fg_color='grey', hover=False)
         self.generate_button.grid(row=2, columnspan=2, padx=20, pady=20, ipadx=20, ipady=20, sticky='ew')
 
         self.config_button = CTkButton(self, text='Edit Config')
@@ -79,6 +87,16 @@ class OperationFrame(CTkFrame):
         self.csv_dir_label.grid(row=4, column=0, padx=20, pady=10)
         self.effective_csv_dir = CTkLabel(self, textvariable=master.joined_csv_dir, wraplength=200)
         self.effective_csv_dir.grid(row=4, column=1, padx=20, pady=20, ipadx=5, ipady=5, sticky='e')
+
+    def active_gen_button(self, *args):
+        _ = args
+        self.generate_button.configure(fg_color='green', hover=True, hover_color='darkgreen')
+        return
+
+    def default_gen_button(self, *args):
+        _ = args
+        self.generate_button.configure(fg_color='grey', hover=False)
+        return
 
 
 @print_memory_usage
@@ -102,10 +120,14 @@ class App(CTk):
 
         self.PDFFrame = PDFFrame(self)
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=3)
-        self.PDFFrame.register_callback(self.store_label_data)
+        self.PDFFrame.register_select_callback(self.store_label_data)
+        self.PDFFrame.register_reset_callback(self.reset_odoo_ref)
 
         self.config_frame = OperationFrame(self)
         self.config_frame.grid(row=1, column=2, padx=20, sticky='e')
+
+        self.PDFFrame.register_select_callback(self.config_frame.active_gen_button)
+        self.PDFFrame.register_reset_callback(self.config_frame.default_gen_button)
 
     def _select_hotfolder(self):
         hotfolder_dir: str = filedialog.askdirectory(initialdir=self.hotfolder_dir.get())
@@ -126,6 +148,9 @@ class App(CTk):
         self.odoo_ref.set(self.label_data[0]['in_ref'])
         return
 
+    def reset_odoo_ref(self):
+        self.odoo_ref.set('No file selected')
+        return
 
 if __name__ == "__main__":
     app = App(config)
