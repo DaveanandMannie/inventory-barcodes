@@ -1,4 +1,6 @@
-from customtkinter import CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk
+from customtkinter import (
+    CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk, CTkScrollableFrame
+)
 from odoogen import *
 from e2e_test import print_memory_usage
 import json
@@ -54,7 +56,6 @@ class PDFFrame(CTkFrame):
             callback(file_path)
         return
 
-    # TODO: Callback? :(
     def _execute_reset_callbacks(self):
         self.selected_file.set(self.default_pdf)
         for callback in self.reset_callbacks:
@@ -62,7 +63,11 @@ class PDFFrame(CTkFrame):
         return
 
 
-# TODO: create a config pop up with a password
+class IndividualLabelFrame(CTkScrollableFrame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+
+
 class OperationFrame(CTkFrame):
     def __init__(self, master):
         super().__init__(master)
@@ -82,6 +87,7 @@ class OperationFrame(CTkFrame):
         )
         self.generate_button.grid(row=2, columnspan=2, padx=20, pady=20, ipadx=20, ipady=20, sticky='ew')
 
+        # TODO: create a config pop up with a password
         self.config_button = CTkButton(self, text='Edit Config')
         self.config_button.grid(row=3, column=0, padx=20, pady=20, ipadx=5, ipady=5, sticky='w')
         # TODO: decide what to show in the config tile subspace
@@ -130,12 +136,17 @@ class App(CTk):
         self.grid_columnconfigure(index=0, weight=1)
         self.grid_columnconfigure(index=1, weight=1)
         self.grid_columnconfigure(index=2, weight=1)
+        self.grid_columnconfigure(index=3, weight=0)
+        self.grid_rowconfigure(index=2, weight=1)
 
         self.PDFFrame = PDFFrame(self)
-        self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=3)
+        self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=4)
+        # TODO: create progress bar. I think on top, but I'm not sure; I need a design class or something
+        self.scroll_frame = IndividualLabelFrame(self)
+        self.scroll_frame.grid(row=1, column=0, columnspan=3, padx=(20, 10), pady=(0, 20), rowspan=3, sticky='nsew')
 
         self.OperationFrame = OperationFrame(self)
-        self.OperationFrame.grid(row=1, column=2, padx=20, sticky='e')
+        self.OperationFrame.grid(row=1, column=3, padx=(10, 20), sticky='e')
 
         # call back registry
         self.PDFFrame.register_select_callback(self.OperationFrame.active_gen_button)
