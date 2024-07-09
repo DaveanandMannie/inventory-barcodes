@@ -1,8 +1,9 @@
 from customtkinter import (
-    CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk, CTkScrollableFrame
+    CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk, CTkScrollableFrame, CTkCheckBox, CTkEntry, IntVar,
+    BooleanVar, CTkToplevel
 )
+from tkinter import messagebox
 from odoogen import *
-from e2e_test import print_memory_usage
 import json
 from typing import Callable
 
@@ -10,6 +11,7 @@ with open('./documents/test_config.json') as file:
     config: dict = json.load(file)
 
 
+# TODO: doc strings ? probably for future me
 # TODO: Create a global font object
 class PDFFrame(CTkFrame):
     def __init__(self, master):
@@ -63,9 +65,90 @@ class PDFFrame(CTkFrame):
         return
 
 
-class IndividualLabelFrame(CTkScrollableFrame):
+class SingleLabelFrame(CTkFrame):
+    def __init__(self, master, label_dict: dict):
+        super().__init__(master, width=500, height=100)
+        self.label_data = label_dict
+        self.product_name = StringVar(value=label_dict['product'].replace(' ', '\n', 1).replace('_RM', ''))
+        self.single_gen_button = CTkButton(self, text='Print', command=self._print_single_label)  # TODO: Create func
+        self.in_qty = StringVar(value=label_dict['in_qty'])
+        self.partial = BooleanVar(value=label_dict['partial'])
+
+        if label_dict['box_qty']:
+            self.box_qty = IntVar(value=label_dict['box_qty'])
+        else:
+            self.box_qty = IntVar(value=0)
+
+        self.partial = CTkCheckBox(self, text='Label as Partial', variable=self.partial, command=self._change_partial)
+
+        self.product_name_label = CTkLabel(self, textvariable=self.product_name, width=225)
+        self.box_qty_label = CTkLabel(self, text='Box Quantity:')
+        self.box_qty_entry = CTkEntry(self, textvariable=self.box_qty, width=60, justify='center')
+        self.box_qty_entry.bind('<Return>', self._change_box_qty)
+        self.in_qty_label = CTkLabel(self, textvariable=self.in_qty)
+
+        # TODO: make it more pretty cuz the pixel differences are hurting my soul
+        self.product_name_label.grid(row=0, column=0, padx=(10, 20), pady=20, sticky='w')
+        self.box_qty_label.grid(row=0, column=1, pady=20)
+        self.box_qty_entry.grid(row=0, column=2, padx=(5, 10), pady=20)
+        self.partial.grid(row=0, column=3, padx=10, pady=20)
+        self.in_qty_label.grid(row=0, column=4, padx=10, pady=20)
+        self.single_gen_button.grid(row=0, column=5, padx=10, pady=20, sticky='e')
+        self.columnconfigure(index=0, weight=1)
+
+    def _print_single_label(self):
+        raise NotImplementedError
+
+    # TODO: style pop ups
+    def _change_box_qty(self, event):
+        _ = event
+        try:
+            new_qty = int(self.box_qty_entry.get())
+            self.box_qty.set(new_qty)
+            self.label_data['box_qty'] = new_qty
+            messagebox.showinfo("Box Quantity Updated", f"Box Quantity updated to: {new_qty}")
+            CTkToplevel(self,)
+        except ValueError:
+            messagebox.showerror('Error', 'Incorrect Value')
+
+    def _change_partial(self):
+        if self.partial.get() == 0:
+            self.label_data['partial'] = False
+        else:
+            self.label_data['partial'] = True
+
+
+class AllLabelFrame(CTkScrollableFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self.columnconfigure(index=0, weight=1)
+        self.columnconfigure(index=1, weight=0)
+        self.frames: list = []
+
+        self.Title_label = CTkLabel(self, text='Print Individual Labels', font=('consolas', 19, 'bold'))
+        self.pseudo_hr = CTkFrame(self, height=4, fg_color='white')
+        # self.test = SingleLabelFrame(self, master.label_data)  #TODO: change to handle it dynamically
+
+        self.Title_label.grid(row=0, column=0, padx=(20, 10), pady=5, sticky='ew')
+        self.pseudo_hr.grid(row=1, columnspan=2, sticky='ew')
+
+    def generate_frames(self, label_data: list):
+        if len(self.frames) > 0:
+            for frame in self.frames:
+                frame.destroy()
+            self.frames.clear()
+        frame_num: int = 2
+        for label_dict in label_data:
+            frame = SingleLabelFrame(self, label_dict)
+            frame.grid(row=frame_num)
+            self.frames.append(frame)
+            frame_num += 1
+
+    def delete_frames(self):
+        if len(self.frames) == 0:
+            for frame in self.frames:
+                frame.destroy()
+        self.frames.clear()
 
 
 class OperationFrame(CTkFrame):
@@ -118,15 +201,15 @@ class OperationFrame(CTkFrame):
         return
 
 
-@print_memory_usage
 class App(CTk):
     def __init__(self, config_file: dict):
         super().__init__()
         self._set_appearance_mode('dark')
         self.title('Receiving Barcode Generator')
-        self.geometry("1080x720")
+        self.geometry("1366x768")
+        self.resizable(False, False)
         self.config: dict = config_file
-        self.label_data: list[dict] = []
+        self.label_data: list = []
         self.hotfolder_dir: StringVar = StringVar(value=self.config['hotfolder_dir'])
         self.default_pdf_dir: StringVar = StringVar(value=self.config['default_pdf_dir'])
         self.joined_csv_dir: StringVar = StringVar(value=self.config['csv_history_dir'])
@@ -142,18 +225,27 @@ class App(CTk):
         self.PDFFrame = PDFFrame(self)
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=4)
         # TODO: create progress bar. I think on top, but I'm not sure; I need a design class or something
-        self.scroll_frame = IndividualLabelFrame(self)
-        self.scroll_frame.grid(row=1, column=0, columnspan=3, padx=(20, 10), pady=(0, 20), rowspan=3, sticky='nsew')
+        self.individual_label_frame = AllLabelFrame(self)
+        self.individual_label_frame.grid(row=1, column=0, columnspan=3, padx=(20, 10), pady=(0, 20), rowspan=3, sticky='nsew')
 
         self.OperationFrame = OperationFrame(self)
         self.OperationFrame.grid(row=1, column=3, padx=(10, 20), sticky='e')
 
         # call back registry
+        # ----------- when a file is selected -----------#
         self.PDFFrame.register_select_callback(self.OperationFrame.active_gen_button)
         self.PDFFrame.register_select_callback(self.store_label_data)
+        self.PDFFrame.register_select_callback(self.generate_frames)
+        # ----------- when the reset button is pressed -----------#
         self.PDFFrame.register_reset_callback(self.OperationFrame.default_gen_button)
         self.PDFFrame.register_reset_callback(self.reset_odoo_ref)
+        # ----------- when the generate button is pressed -----------#
         self.OperationFrame.register_gen_button_callback(self.generate_all_labels)
+
+    def generate_frames(self, filepath):
+        _ = filepath
+        self.individual_label_frame.generate_frames(self.label_data)
+        return
 
     def _select_hotfolder(self):
         hotfolder_dir: str = filedialog.askdirectory(initialdir=self.hotfolder_dir.get())
