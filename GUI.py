@@ -97,7 +97,8 @@ class SingleLabelFrame(CTkFrame):
         self.columnconfigure(index=0, weight=1)
 
     def _print_single_label(self):
-        raise NotImplementedError
+        generate_label(label_data=self.label_data, hotfolder=config['hotfolder_dir'])
+        return
 
     # TODO: style pop ups
     def _change_box_qty(self, event):
@@ -107,7 +108,6 @@ class SingleLabelFrame(CTkFrame):
             self.box_qty.set(new_qty)
             self.label_data['box_qty'] = new_qty
             messagebox.showinfo("Box Quantity Updated", f"Box Quantity updated to: {new_qty}")
-            CTkToplevel(self,)
         except ValueError:
             messagebox.showerror('Error', 'Incorrect Value')
 
@@ -116,6 +116,7 @@ class SingleLabelFrame(CTkFrame):
             self.label_data['partial'] = False
         else:
             self.label_data['partial'] = True
+        return
 
 
 class AllLabelFrame(CTkScrollableFrame):
