@@ -1,6 +1,6 @@
 from customtkinter import (
     CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk, CTkScrollableFrame, CTkCheckBox, CTkEntry, IntVar,
-    BooleanVar, CTkToplevel
+    BooleanVar, CTkProgressBar
 )
 from tkinter import messagebox
 from odoogen import *
@@ -247,6 +247,11 @@ class App(CTk):
         # ----------- when the generate button is pressed -----------#
         self.OperationFrame.register_gen_button_callback(self.generate_all_labels)
 
+        self.progress_bar = CTkProgressBar(self, width=300, height=15, progress_color='darkgreen')
+        self.progress_bar.grid(row=2, column=3, columnspan=4, padx=20, pady=20)
+        self.progress_bar.set(0)
+        self.progress_label = CTkLabel(self)
+
     def generate_frames(self, filepath):
         _ = filepath
         self.individual_label_frame.generate_frames(self.label_data)
@@ -275,9 +280,15 @@ class App(CTk):
         self.odoo_ref.set('No file selected')
         return
 
+    def _update_progress(self, progress):
+        self.progress_bar.set(progress)
+        return
+
     def generate_all_labels(self):
-        for label_dict in self.label_data:
+        total_labels: int = len(self.label_data)
+        for i, label_dict in enumerate(self.label_data):
             generate_label(hotfolder=self.hotfolder_dir.get(), label_data=label_dict)
+            self._update_progress((i + 1) / total_labels)
         return
 
 
