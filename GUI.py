@@ -70,7 +70,7 @@ class SingleLabelFrame(CTkFrame):
         super().__init__(master, width=500, height=100)
         self.label_data = label_dict
         self.product_name = StringVar(value=label_dict['product'].replace(' ', '\n', 1).replace('_RM', ''))
-        self.single_gen_button = CTkButton(self, text='Print', command=self._print_single_label)  # TODO: Create func
+        self.single_gen_button = CTkButton(self, text='Print', command=self._print_single_label)
         self.in_qty = StringVar(value=label_dict['in_qty'])
         self.partial = BooleanVar(value=label_dict['partial'])
 
@@ -128,7 +128,6 @@ class AllLabelFrame(CTkScrollableFrame):
 
         self.Title_label = CTkLabel(self, text='Print Individual Labels', font=('consolas', 19, 'bold'))
         self.pseudo_hr = CTkFrame(self, height=4, fg_color='white')
-        # self.test = SingleLabelFrame(self, master.label_data)  #TODO: change to handle it dynamically
 
         self.Title_label.grid(row=0, column=0, padx=(20, 10), pady=5, sticky='ew')
         self.pseudo_hr.grid(row=1, columnspan=2, sticky='ew')
@@ -172,14 +171,18 @@ class OperationFrame(CTkFrame):
         self.generate_button.grid(row=2, columnspan=2, padx=20, pady=20, ipadx=20, ipady=20, sticky='ew')
 
         # TODO: create a config pop up with a password
-        self.config_button = CTkButton(self, text='Edit Config')
-        self.config_button.grid(row=3, column=0, padx=20, pady=20, ipadx=5, ipady=5, sticky='w')
+        self.config_button = CTkButton(self, text='Edit Config', command=self._not_implemented)
+        self.config_button.grid(row=3, column=0, columnspan=2, padx=20, pady=20, ipadx=5, ipady=5, sticky='ew')
         # TODO: decide what to show in the config tile subspace
 
         self.csv_dir_label = CTkLabel(self, text='CSV History:')
         self.csv_dir_label.grid(row=4, column=0, padx=20, pady=10)
         self.effective_csv_dir = CTkLabel(self, textvariable=master.joined_csv_dir, wraplength=200)
         self.effective_csv_dir.grid(row=4, column=1, padx=20, pady=20, ipadx=5, ipady=5, sticky='e')
+
+    @staticmethod
+    def _not_implemented():
+        messagebox.showwarning(title='Not implemented yet', message='Not implemented yet')
 
     def register_gen_button_callback(self, callback: Callable):
         """Register call back to be executed when a file is selected"""
@@ -227,7 +230,8 @@ class App(CTk):
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=4)
         # TODO: create progress bar. I think on top, but I'm not sure; I need a design class or something
         self.individual_label_frame = AllLabelFrame(self)
-        self.individual_label_frame.grid(row=1, column=0, columnspan=3, padx=(20, 10), pady=(0, 20), rowspan=3, sticky='nsew')
+        self.individual_label_frame.grid(row=1, column=0, columnspan=3, padx=(20, 10), pady=(0, 20), rowspan=3,
+                                         sticky='nsew')
 
         self.OperationFrame = OperationFrame(self)
         self.OperationFrame.grid(row=1, column=3, padx=(10, 20), sticky='e')
