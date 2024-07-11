@@ -3,7 +3,6 @@ from customtkinter import (
     BooleanVar, CTkProgressBar
 )
 from CTkMessagebox import CTkMessagebox
-from pymupdf import message
 from odoogen import parse_odoo_pdf, left_join, generate_label, generate_all_label_data
 import json
 from typing import Callable
