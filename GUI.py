@@ -97,6 +97,7 @@ class SingleLabelFrame(CTkFrame):
 
     def _print_single_label(self):
         generate_label(label_data=self.label_data, hotfolder=config['hotfolder_dir'])
+        CTkMessagebox(title='Task Finished', message='Task Finished', icon='check', justify='center')
         return
 
 
