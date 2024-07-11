@@ -2,7 +2,8 @@ from customtkinter import (
     CTkButton, filedialog, CTkLabel, StringVar, CTkFrame, CTk, CTkScrollableFrame, CTkCheckBox, CTkEntry, IntVar,
     BooleanVar, CTkProgressBar
 )
-from tkinter import messagebox
+from CTkMessagebox import CTkMessagebox
+from pymupdf import message
 from odoogen import parse_odoo_pdf, left_join, generate_label, generate_all_label_data
 import json
 from typing import Callable
@@ -87,7 +88,6 @@ class SingleLabelFrame(CTkFrame):
         self.box_qty_entry.bind('<Return>', self._change_box_qty)
         self.in_qty_label = CTkLabel(self, textvariable=self.in_qty)
 
-        # TODO: make it more pretty cuz the pixel differences are hurting my soul
         self.product_name_label.grid(row=0, column=0, padx=(10, 20), pady=20, sticky='w')
         self.box_qty_label.grid(row=0, column=1, pady=20)
         self.box_qty_entry.grid(row=0, column=2, padx=(5, 10), pady=20)
@@ -100,16 +100,16 @@ class SingleLabelFrame(CTkFrame):
         generate_label(label_data=self.label_data, hotfolder=config['hotfolder_dir'])
         return
 
-    # TODO: style pop ups
+
     def _change_box_qty(self, event):
         _ = event
         try:
             new_qty = int(self.box_qty_entry.get())
             self.box_qty.set(new_qty)
             self.label_data['box_qty'] = new_qty
-            messagebox.showinfo("Box Quantity Updated", f"Box Quantity updated to: {new_qty}")
+            CTkMessagebox(title='Box Quanitty Updated', message=f'Box Quanitity updated to: {new_qty}', icon='check', justify='center')
         except ValueError:
-            messagebox.showerror('Error', 'Incorrect Value')
+            CTkMessagebox(title='Error', message='Incorrect Value', icon='cancel', justify='center')
 
     def _change_partial(self):
         if self.partial.get() == 0:
@@ -181,7 +181,7 @@ class OperationFrame(CTkFrame):
 
     @staticmethod
     def _not_implemented():
-        messagebox.showwarning(title='Not implemented yet', message='Not implemented yet')
+        CTkMessagebox(title='Not implemented yet', message='Not implemented yet', justify='center', icon='warning')
         return
 
     def register_gen_button_callback(self, callback: Callable):
@@ -316,6 +316,7 @@ class App(CTk):
                 self.after(100, _process)  # The delay is for aesthetics
             except StopIteration:
                 self.progress_label_text.set('Finished')
+                CTkMessagebox(title='Task Finished', message='Task Finished', icon='check', justify='center')
         _process()
         return
 
