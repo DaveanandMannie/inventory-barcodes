@@ -182,6 +182,7 @@ class OperationFrame(CTkFrame):
     @staticmethod
     def _not_implemented():
         messagebox.showwarning(title='Not implemented yet', message='Not implemented yet')
+        return
 
     def register_gen_button_callback(self, callback: Callable):
         """Register call back to be executed when a file is selected"""
@@ -227,8 +228,8 @@ class App(CTk):
 
         self.PDFFrame = PDFFrame(self)
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=4)
-        # TODO: create progress bar. I think on top, but I'm not sure; I need a design class or something
         self.Individual_Label_Frame = AllLabelFrame(self)
+
         self.Individual_Label_Frame.grid(row=1, column=0, columnspan=3, padx=(20, 10), pady=(0, 20), rowspan=3,
                                          sticky='nsew')
 
@@ -240,13 +241,16 @@ class App(CTk):
         self.PDFFrame.register_select_callback(self.OperationFrame.active_gen_button)
         self.PDFFrame.register_select_callback(self.store_label_data)
         self.PDFFrame.register_select_callback(self.generate_frames)
+
         # ----------- when the reset button is pressed -----------#
         self.PDFFrame.register_reset_callback(self.OperationFrame.default_gen_button)
         self.PDFFrame.register_reset_callback(self.reset_odoo_ref)
         self.PDFFrame.register_reset_callback(self.delete_frames)
         self.PDFFrame.register_reset_callback(self.rest_progress)
+
         # ----------- when the generate button is pressed -----------#
         self.OperationFrame.register_gen_button_callback(self.generate_all_labels)
+
         # --------------Progress bar----------------- #
         self.progress_bar = CTkProgressBar(self, width=300, height=15, progress_color='darkgreen')
         self.progress_bar.grid(row=2, column=3, columnspan=4, padx=20, pady=(90, 10), sticky='n')
@@ -288,7 +292,6 @@ class App(CTk):
         return
 
     def _update_progress(self, progress):
-        print(progress)
         self.progress_bar.set(progress)
         return
 
