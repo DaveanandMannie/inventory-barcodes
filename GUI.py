@@ -244,13 +244,16 @@ class App(CTk):
         self.PDFFrame.register_reset_callback(self.OperationFrame.default_gen_button)
         self.PDFFrame.register_reset_callback(self.reset_odoo_ref)
         self.PDFFrame.register_reset_callback(self.delete_frames)
+        self.PDFFrame.register_reset_callback(self.rest_progress)
         # ----------- when the generate button is pressed -----------#
         self.OperationFrame.register_gen_button_callback(self.generate_all_labels)
-
+        # --------------Progress bar----------------- #
         self.progress_bar = CTkProgressBar(self, width=300, height=15, progress_color='darkgreen')
-        self.progress_bar.grid(row=2, column=3, columnspan=4, padx=20, pady=20)
+        self.progress_bar.grid(row=2, column=3, columnspan=4, padx=20, pady=(90, 10), sticky='n')
         self.progress_bar.set(0)
-        self.progress_label = CTkLabel(self)
+        self.progress_label_text = StringVar(value='No task')
+        self.progress_label = CTkLabel(self, textvariable=self.progress_label_text, font=('consolas', 19, 'bold'))
+        self.progress_label.grid(row=2, column=3, padx=20, sticky='ew')
 
     def generate_frames(self, filepath):
         _ = filepath
@@ -285,14 +288,32 @@ class App(CTk):
         return
 
     def _update_progress(self, progress):
+        print(progress)
         self.progress_bar.set(progress)
         return
 
+    def rest_progress(self):
+        self.progress_label_text.set('No task')
+        self.progress_bar.set(0)
+        return
+
     def generate_all_labels(self):
+        self.progress_label_text.set('Working')
         total_labels: int = len(self.label_data)
-        for i, label_dict in enumerate(self.label_data):
-            generate_label(hotfolder=self.hotfolder_dir.get(), label_data=label_dict)
-            self._update_progress((i + 1) / total_labels)
+        label_iter = iter(self.label_data)
+        process_count: int = 1
+
+        def _process():
+            try:
+                nonlocal process_count  # I watch one functional video XD
+                label_dict = next(label_iter)
+                generate_label(hotfolder=self.hotfolder_dir.get(), label_data=label_dict)
+                process_count += 1
+                self._update_progress(process_count / (total_labels + 1))
+                self.after(100, _process)  # The delay is for aesthetics
+            except StopIteration:
+                self.progress_label_text.set('Finished')
+        _process()
         return
 
 
