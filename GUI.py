@@ -37,7 +37,7 @@ class PDFFrame(CTkFrame):
         self.select_pdf_button.grid(row=0, column=3, padx=20, pady=20, ipadx=5, ipady=5, sticky='e')
 
     def _select_receiving_pdf(self):
-        file_path: str = filedialog.askopenfilename(initialdir=self.master.default_pdf_dir.get())
+        file_path: str = filedialog.askopenfilename(initialdir=self.master.default_pdf_dir.get())  # pyright: ignore
         if file_path:
             self.selected_file.set(file_path)
             self._execute_select_callbacks(file_path)
