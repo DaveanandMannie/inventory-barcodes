@@ -3,7 +3,7 @@ from customtkinter import (
     BooleanVar, CTkProgressBar
 )
 from tkinter import messagebox
-from odoogen import *
+from odoogen import parse_odoo_pdf, left_join, generate_label, generate_all_label_data
 import json
 from typing import Callable
 
@@ -145,9 +145,8 @@ class AllLabelFrame(CTkScrollableFrame):
             frame_num += 1
 
     def delete_frames(self):
-        if len(self.frames) == 0:
-            for frame in self.frames:
-                frame.destroy()
+        for frame in self.frames:
+            frame.destroy()
         self.frames.clear()
 
 
@@ -229,8 +228,8 @@ class App(CTk):
         self.PDFFrame = PDFFrame(self)
         self.PDFFrame.grid(row=0, column=0, padx=20, pady=20, sticky="ew", columnspan=4)
         # TODO: create progress bar. I think on top, but I'm not sure; I need a design class or something
-        self.individual_label_frame = AllLabelFrame(self)
-        self.individual_label_frame.grid(row=1, column=0, columnspan=3, padx=(20, 10), pady=(0, 20), rowspan=3,
+        self.Individual_Label_Frame = AllLabelFrame(self)
+        self.Individual_Label_Frame.grid(row=1, column=0, columnspan=3, padx=(20, 10), pady=(0, 20), rowspan=3,
                                          sticky='nsew')
 
         self.OperationFrame = OperationFrame(self)
@@ -244,6 +243,7 @@ class App(CTk):
         # ----------- when the reset button is pressed -----------#
         self.PDFFrame.register_reset_callback(self.OperationFrame.default_gen_button)
         self.PDFFrame.register_reset_callback(self.reset_odoo_ref)
+        self.PDFFrame.register_reset_callback(self.delete_frames)
         # ----------- when the generate button is pressed -----------#
         self.OperationFrame.register_gen_button_callback(self.generate_all_labels)
 
@@ -254,7 +254,11 @@ class App(CTk):
 
     def generate_frames(self, filepath):
         _ = filepath
-        self.individual_label_frame.generate_frames(self.label_data)
+        self.Individual_Label_Frame.generate_frames(self.label_data)
+        return
+
+    def delete_frames(self):
+        self.Individual_Label_Frame.delete_frames()
         return
 
     def _select_hotfolder(self):
