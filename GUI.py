@@ -4,11 +4,18 @@ from customtkinter import (
 )
 from CTkMessagebox import CTkMessagebox
 from odoogen import parse_odoo_pdf, left_join, generate_label, generate_all_label_data
-import json
+import os
+from dotenv import load_dotenv
 from typing import Callable
 
-with open('./documents/test_config.json') as file:
-    config: dict = json.load(file)
+load_dotenv()
+
+config: dict = {
+    "csv_history_dir": os.getenv('CSV_HISTORY_DIR'),
+    "hotfolder_dir": os.getenv('HOTFOLDER_DIR'),
+    "default_pdf_dir": os.getenv('DEFAULT_PDF_DIR'),
+    "product_var_csv": os.getenv('PRODUCT_VAR_CSV')
+}
 
 
 # TODO: doc strings ? probably for future me
@@ -100,14 +107,14 @@ class SingleLabelFrame(CTkFrame):
         CTkMessagebox(title='Task Finished', message='Task Finished', icon='check', justify='center')
         return
 
-
     def _change_box_qty(self, event):
         _ = event
         try:
             new_qty = int(self.box_qty_entry.get())
             self.box_qty.set(new_qty)
             self.label_data['box_qty'] = new_qty
-            CTkMessagebox(title='Box Quanitty Updated', message=f'Box Quanitity updated to: {new_qty}', icon='check', justify='center')
+            CTkMessagebox(title='Box Quanitty Updated', message=f'Box Quanitity updated to: {new_qty}', icon='check',
+                          justify='center')
         except ValueError:
             CTkMessagebox(title='Error', message='Incorrect Value', icon='cancel', justify='center')
 
@@ -172,7 +179,6 @@ class OperationFrame(CTkFrame):
         # TODO: create a config pop up with a password
         self.config_button = CTkButton(self, text='Edit Config', command=self._not_implemented)
         self.config_button.grid(row=3, column=0, columnspan=2, padx=20, pady=20, ipadx=5, ipady=5, sticky='ew')
-        # TODO: decide what to show in the config tile subspace
 
         self.csv_dir_label = CTkLabel(self, text='CSV History:')
         self.csv_dir_label.grid(row=4, column=0, padx=20, pady=10)
@@ -317,6 +323,7 @@ class App(CTk):
             except StopIteration:
                 self.progress_label_text.set('Finished')
                 CTkMessagebox(title='Task Finished', message='Task Finished', icon='check', justify='center')
+
         _process()
         return
 

@@ -1,6 +1,0 @@
-{
-    "csv_history_dir": "test_targets/csv_history",
-    "hotfolder_dir": "test_targets/hotfolder",
-    "default_pdf_dir": "test_targets",
-    "product_var_csv":"documents/product_code_case.csv"
-}
