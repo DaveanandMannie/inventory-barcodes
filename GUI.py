@@ -229,6 +229,7 @@ class App(CTk):
     """Main app window"""
     def __init__(self, config_file: dict):
         super().__init__()
+        self.iconbitmap('resources/icon.ico')
         self._set_appearance_mode('dark')
         self.title('Receiving Barcode Generator')
         self.geometry("1366x768")
