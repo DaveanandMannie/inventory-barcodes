@@ -5,6 +5,8 @@ from customtkinter import (
 from CTkMessagebox import CTkMessagebox
 from odoogen import parse_odoo_pdf, left_join, generate_label, generate_all_label_data
 import os
+import sys
+from datetime import datetime
 from dotenv import load_dotenv
 from typing import Callable
 
@@ -16,6 +18,10 @@ config: dict = {
     "default_pdf_dir": os.getenv('DEFAULT_PDF_DIR'),
     "product_var_csv": os.getenv('PRODUCT_VAR_CSV')
 }
+
+sys.stdout = open('./logs/stdout.txt', 'w')
+sys.stderr = open('./logs/stderr.txt', 'w')
+
 
 TITLE_FONT: tuple = ('Arial', 19, 'bold')
 FONT: tuple = ('Arial', 14)
@@ -223,6 +229,7 @@ class App(CTk):
     """Main app window"""
     def __init__(self, config_file: dict):
         super().__init__()
+        self.iconbitmap('resources/icon.ico')
         self._set_appearance_mode('dark')
         self.title('Receiving Barcode Generator')
         self.geometry("1366x768")
@@ -332,6 +339,8 @@ class App(CTk):
             except StopIteration:
                 self.progress_label_text.set('Finished')
                 CTkMessagebox(title='Task Finished', message='Task Finished', icon='check', justify='center')
+                date: str = datetime.now().strftime('%d-%m-%Y %H:%M')
+                print(f'Finished: {self.label_data[0]['in_ref']} -> {date}')
 
         _process()
         return
