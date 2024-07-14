@@ -18,9 +18,9 @@ config: dict = {
 }
 
 
-# TODO: doc strings ? probably for future me
 # TODO: Create a global font object
 class PDFFrame(CTkFrame):
+    """Top Frame where the PDF is chosen"""
     def __init__(self, master):
         super().__init__(master)
         self.grid_columnconfigure(index=1, weight=2)
@@ -73,6 +73,7 @@ class PDFFrame(CTkFrame):
 
 
 class SingleLabelFrame(CTkFrame):
+    """Each of these will populate the scrollable frame"""
     def __init__(self, master, label_dict: dict):
         super().__init__(master, width=500, height=100)
         self.label_data = label_dict
@@ -127,6 +128,7 @@ class SingleLabelFrame(CTkFrame):
 
 
 class AllLabelFrame(CTkScrollableFrame):
+    """A scrollable frame that as each product in the PDF"""
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.columnconfigure(index=0, weight=1)
@@ -158,6 +160,7 @@ class AllLabelFrame(CTkScrollableFrame):
 
 
 class OperationFrame(CTkFrame):
+    """The frame where it shows all the working dirs and has the configurable .env"""
     def __init__(self, master):
         super().__init__(master)
         self.hotfolder_label = CTkLabel(self, text='Current Hotfolder:')
@@ -212,6 +215,7 @@ class OperationFrame(CTkFrame):
 
 
 class App(CTk):
+    """Main app window"""
     def __init__(self, config_file: dict):
         super().__init__()
         self._set_appearance_mode('dark')
