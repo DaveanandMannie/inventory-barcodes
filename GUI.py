@@ -114,7 +114,7 @@ class SingleLabelFrame(CTkFrame):
             new_qty = int(self.box_qty_entry.get())
             self.box_qty.set(new_qty)
             self.label_data['box_qty'] = new_qty
-            CTkMessagebox(title='Box Quanitty Updated', message=f'Box Quanitity updated to: {new_qty}', icon='check',
+            CTkMessagebox(title='Box Quantity Updated', message=f'Box Quantity updated to: {new_qty}', icon='check',
                           justify='center')
         except ValueError:
             CTkMessagebox(title='Error', message='Incorrect Value', icon='cancel', justify='center')
