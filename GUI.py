@@ -17,8 +17,10 @@ config: dict = {
     "product_var_csv": os.getenv('PRODUCT_VAR_CSV')
 }
 
+TITLE_FONT: tuple = ('Arial', 19, 'bold')
+FONT: tuple = ('Arial', 14)
 
-# TODO: Create a global font object
+
 class PDFFrame(CTkFrame):
     """Top Frame where the PDF is chosen"""
     def __init__(self, master):
@@ -29,18 +31,18 @@ class PDFFrame(CTkFrame):
         self.select_callbacks: list = []
         self.reset_callbacks: list = []
 
-        self.file_frame_label = CTkLabel(self, text='"Picking Operations" PDF:', font=('consolas', 19, 'bold'))
+        self.file_frame_label = CTkLabel(self, text='"Picking Operations" PDF:', font=TITLE_FONT)
         self.file_frame_label.grid(row=0, column=0, sticky='nsew', padx=20)
 
-        self.selected_pdf_label = CTkLabel(self, textvariable=self.selected_file, wraplength=350)
+        self.selected_pdf_label = CTkLabel(self, textvariable=self.selected_file, wraplength=350, font=FONT)
         self.selected_pdf_label.grid(row=0, column=1, sticky='nsew', padx=20)
 
         self.reset_button = CTkButton(
-            self, text='Reset', fg_color='red', hover_color='darkred', command=self._execute_reset_callbacks
+            self, text='Reset', fg_color='red', hover_color='darkred', command=self._execute_reset_callbacks, font=FONT
         )
         self.reset_button.grid(row=0, column=2)
 
-        self.select_pdf_button = CTkButton(self, text='Select Odoo PDF', command=self._select_receiving_pdf)
+        self.select_pdf_button = CTkButton(self, text='Select Odoo PDF', command=self._select_receiving_pdf, font=FONT)
         self.select_pdf_button.grid(row=0, column=3, padx=20, pady=20, ipadx=5, ipady=5, sticky='e')
 
     def _select_receiving_pdf(self):
@@ -78,7 +80,7 @@ class SingleLabelFrame(CTkFrame):
         super().__init__(master, width=500, height=100)
         self.label_data = label_dict
         self.product_name = StringVar(value=label_dict['product'].replace(' ', '\n', 1).replace('_RM', ''))
-        self.single_gen_button = CTkButton(self, text='Print', command=self._print_single_label)
+        self.single_gen_button = CTkButton(self, text='Print', command=self._print_single_label, font=FONT)
         self.in_qty = StringVar(value=label_dict['in_qty'])
         self.partial = BooleanVar(value=label_dict['partial'])
 
@@ -89,11 +91,11 @@ class SingleLabelFrame(CTkFrame):
 
         self.partial = CTkCheckBox(self, text='Label as Partial', variable=self.partial, command=self._change_partial)
 
-        self.product_name_label = CTkLabel(self, textvariable=self.product_name, width=225)
-        self.box_qty_label = CTkLabel(self, text='Box Quantity:')
-        self.box_qty_entry = CTkEntry(self, textvariable=self.box_qty, width=60, justify='center')
+        self.product_name_label = CTkLabel(self, textvariable=self.product_name, width=225, font=FONT)
+        self.box_qty_label = CTkLabel(self, text='Box Quantity:', font=FONT)
+        self.box_qty_entry = CTkEntry(self, textvariable=self.box_qty, width=60, justify='center', font=FONT)
         self.box_qty_entry.bind('<Return>', self._change_box_qty)
-        self.in_qty_label = CTkLabel(self, textvariable=self.in_qty)
+        self.in_qty_label = CTkLabel(self, textvariable=self.in_qty, font=FONT)
 
         self.product_name_label.grid(row=0, column=0, padx=(10, 20), pady=20, sticky='w')
         self.box_qty_label.grid(row=0, column=1, pady=20)
@@ -135,7 +137,7 @@ class AllLabelFrame(CTkScrollableFrame):
         self.columnconfigure(index=1, weight=0)
         self.frames: list = []
 
-        self.Title_label = CTkLabel(self, text='Print Individual Labels', font=('consolas', 19, 'bold'))
+        self.Title_label = CTkLabel(self, text='Print Individual Labels', font=TITLE_FONT)
         self.pseudo_hr = CTkFrame(self, height=4, fg_color='white')
 
         self.Title_label.grid(row=0, column=0, padx=(20, 10), pady=5, sticky='ew')
@@ -163,34 +165,37 @@ class OperationFrame(CTkFrame):
     """The frame where it shows all the working dirs and has the configurable .env"""
     def __init__(self, master):
         super().__init__(master)
-        self.hotfolder_label = CTkLabel(self, text='Current Hotfolder:')
+        self.hotfolder_label = CTkLabel(self, text='Current Hotfolder:', font=FONT)
         self.hotfolder_label.grid(row=0, column=0, padx=20, pady=10)
-        self.effective_hotfolder_label = CTkLabel(self, textvariable=master.hotfolder_dir, wraplength=200)
+        self.effective_hotfolder_label = CTkLabel(self, textvariable=master.hotfolder_dir, wraplength=200, font=FONT)
         self.effective_hotfolder_label.grid(row=0, column=1, padx=20, pady=10)
         self.gen_button_callbacks: list = []
 
-        self.odoo_ref_label = CTkLabel(self, text='Odoo Reference:')
+        self.odoo_ref_label = CTkLabel(self, text='Odoo Reference:', font=FONT)
         self.odoo_ref_label.grid(row=1, column=0, padx=20, pady=10)
-        self.effective_hotfolder_label = CTkLabel(self, textvariable=master.odoo_ref, wraplength=200)
+        self.effective_hotfolder_label = CTkLabel(self, textvariable=master.odoo_ref, wraplength=200, font=FONT)
         self.effective_hotfolder_label.grid(row=1, column=1, padx=20, pady=10)
 
         self.generate_button = CTkButton(
-            self, text='Generate Labels', fg_color='grey', hover=False, command=self._execute_gen_button_callbacks
+            self, text='Generate Labels', fg_color='grey', hover=False, command=self._execute_gen_button_callbacks,
+            font=FONT
         )
         self.generate_button.grid(row=2, columnspan=2, padx=20, pady=20, ipadx=20, ipady=20, sticky='ew')
 
         # TODO: create a config pop up with a password
-        self.config_button = CTkButton(self, text='Edit Config', command=self._not_implemented)
+        self.config_button = CTkButton(self, text='Edit Config', command=self._not_implemented, font=FONT)
         self.config_button.grid(row=3, column=0, columnspan=2, padx=20, pady=20, ipadx=5, ipady=5, sticky='ew')
 
-        self.csv_dir_label = CTkLabel(self, text='CSV History:')
+        self.csv_dir_label = CTkLabel(self, text='CSV History:', font=FONT)
         self.csv_dir_label.grid(row=4, column=0, padx=20, pady=10)
-        self.effective_csv_dir = CTkLabel(self, textvariable=master.joined_csv_dir, wraplength=200)
+        self.effective_csv_dir = CTkLabel(self, textvariable=master.joined_csv_dir, wraplength=200, font=FONT)
         self.effective_csv_dir.grid(row=4, column=1, padx=20, pady=20, ipadx=5, ipady=5, sticky='e')
 
     @staticmethod
     def _not_implemented():
-        CTkMessagebox(title='Not implemented yet', message='Not implemented yet', justify='center', icon='warning')
+        CTkMessagebox(
+            title='Not implemented yet', message='Not implemented yet', justify='center', icon='warning', font=FONT
+        )
         return
 
     def register_gen_button_callback(self, callback: Callable):
@@ -266,7 +271,7 @@ class App(CTk):
         self.progress_bar.grid(row=2, column=3, columnspan=4, padx=20, pady=(90, 10), sticky='n')
         self.progress_bar.set(0)
         self.progress_label_text = StringVar(value='No task')
-        self.progress_label = CTkLabel(self, textvariable=self.progress_label_text, font=('consolas', 19, 'bold'))
+        self.progress_label = CTkLabel(self, textvariable=self.progress_label_text, font=TITLE_FONT)
         self.progress_label.grid(row=2, column=3, padx=20, sticky='ew')
 
     def generate_frames(self, filepath):
