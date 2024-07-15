@@ -7,6 +7,7 @@ associated with the PO to our hotfolder to print the labels
 
 On the left of the application, you can reprint individual labels and correct any mistakes, either from on the PO side
 or on my end. It is pre-populated with label data.
+The label output is 4x6
 
 ![demo](https://github.com/DaveanandMannie/inventory-barcodes/blob/master/readme_resources/demo.gif)
 ![output](https://github.com/DaveanandMannie/inventory-barcodes/blob/master/readme_resources/output.png)
