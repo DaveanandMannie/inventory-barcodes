@@ -31,6 +31,7 @@ class PDFFrame(CTkFrame):
     """Top Frame where the PDF is chosen"""
     def __init__(self, master):
         super().__init__(master)
+        self._set_appearance_mode('dark')
         self.grid_columnconfigure(index=1, weight=2)
         self.default_pdf: str = 'No file selected'
         self.selected_file = StringVar(value=self.default_pdf)
@@ -84,6 +85,7 @@ class SingleLabelFrame(CTkFrame):
     """Each of these will populate the scrollable frame"""
     def __init__(self, master, label_dict: dict):
         super().__init__(master, width=500, height=100)
+        self._set_appearance_mode('dark')
         self.label_data = label_dict
         self.product_name = StringVar(value=label_dict['product'].replace(' ', '\n', 1).replace('_RM', ''))
         self.single_gen_button = CTkButton(self, text='Print', command=self._print_single_label, font=FONT)
@@ -139,6 +141,7 @@ class AllLabelFrame(CTkScrollableFrame):
     """A scrollable frame that as each product in the PDF"""
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self._set_appearance_mode('dark')
         self.columnconfigure(index=0, weight=1)
         self.columnconfigure(index=1, weight=0)
         self.frames: list = []
@@ -171,6 +174,7 @@ class OperationFrame(CTkFrame):
     """The frame where it shows all the working dirs and has the configurable .env"""
     def __init__(self, master):
         super().__init__(master)
+        self._set_appearance_mode('dark')
         self.hotfolder_label = CTkLabel(self, text='Current Hotfolder:', font=FONT)
         self.hotfolder_label.grid(row=0, column=0, padx=20, pady=10)
         self.effective_hotfolder_label = CTkLabel(self, textvariable=master.hotfolder_dir, wraplength=200, font=FONT)
