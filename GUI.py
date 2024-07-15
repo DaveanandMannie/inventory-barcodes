@@ -19,8 +19,8 @@ config: dict = {
     "product_var_csv": os.getenv('PRODUCT_VAR_CSV')
 }
 
-sys.stdout = open('./logs/stdout.txt', 'w')
-sys.stderr = open('./logs/stderr.txt', 'w')
+sys.stdout = open('./logs/stdout.txt', 'a')
+sys.stderr = open('./logs/stderr.txt', 'a')
 
 
 TITLE_FONT: tuple = ('Arial', 19, 'bold')
