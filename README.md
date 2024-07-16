@@ -1,6 +1,8 @@
 # Receiving Barcode Generator
 A small app that creates barcode labels for each box on a given PO
 
+Current issue: App is configured for windows on darkmode, Light mode has issues with transparent UI componants
+
 ## Usage
 To use simply download the ```Picking Operations from A PO ``` and click ```Generate``` it will send all labels
 associated with the PO to our hotfolder to print the labels
