@@ -1,0 +1,5 @@
+{
+    "extends": "C:/Users/support/AppData/Local/nvim/pyrightconfig.json",
+    "reportUnknownMemberType": false,
+    "reportMissingTypeStubs": false
+}
