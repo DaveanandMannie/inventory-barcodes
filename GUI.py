@@ -132,6 +132,9 @@ class LinkFrame(CTkFrame):
             c_link: str = self._clean_link(link)
             self.receipt_link.set(c_link)
             self._execute_select_callbacks(c_link)
+            self.master.progress_label_text.set(  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
+                'Task finished\nNext: Generate all or one label'
+            )
             self.master.progress_bar.set(1)  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
         except NoLinkError:
             self._no_link()
