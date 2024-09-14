@@ -207,12 +207,14 @@ def generate_label(hotfolder: str, label_data: LabelData):
     )
 
     page.set_rotation(90)
+
     filename: str = _sanitize_filename(label_data['product'])
+    target: str = os.path.join(hotfolder, filename)
 
     if not label_data['partial'] and label_data['num_boxes'] != 0:
         for i in range(label_data['num_boxes']):
-            label.save(f'{hotfolder}/{filename}-{i + 1}.pdf')
+            label.save(f'{target}-{i + 1}.pdf')
     else:
-        label.save(f'{hotfolder}/{filename}-1.pdf')
+        label.save(f'{target}-1.pdf')
 
     label.close()
