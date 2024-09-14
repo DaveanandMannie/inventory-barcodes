@@ -483,7 +483,9 @@ class App(CTk):
         self.progress_label = CTkLabel(
             self, textvariable=self.progress_label_text, font=TITLE_FONT
         )
-        self.progress_label.grid(row=2, column=3, padx=20, sticky='ew')
+        self.progress_label.grid(
+            row=2, column=3, padx=20, pady=(10, 0), sticky='ew'
+        )
 
     def generate_frames(self, link: str):
         """Generates the frames for receipt line items"""
