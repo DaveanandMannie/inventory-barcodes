@@ -45,6 +45,14 @@ TITLE_FONT: tuple[str, int, str] = ('Arial', 19, 'bold')
 FONT: tuple[str, int] = ('Arial', 14)
 
 
+class NoLinkError(Exception):
+    pass
+
+
+class LinkError(Exception):
+    pass
+
+
 class LinkFrame(CTkFrame):
     """Top Frame where the link is inputed"""
     def __init__(self, master: 'App'):
@@ -99,6 +107,19 @@ class LinkFrame(CTkFrame):
         self.master.odoo_ref.set('Working please wait...')  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
         self.master.progress_label_text.set('Grabbing reciept info...')  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
 
+    def _clean_link(self, link: str | None) -> str:
+        prefix: str = 'https://'
+        odoo: str = 'odoo.printgeek.ca'
+        if link is None or not link:
+            raise NoLinkError
+        elif odoo not in link:
+            raise LinkError
+        elif not link.startswith(prefix):
+            c_link = prefix + link
+        else:
+            c_link = link
+        return c_link
+
     def _help_get(self):
         """Func to get link and execute  callbacks"""
         dialog: CTkInputDialog = CTkInputDialog(
@@ -107,16 +128,44 @@ class LinkFrame(CTkFrame):
             button_hover_color='green'
         )
         link: str | None = dialog.get_input()
-
-        if link:
-            self.receipt_link.set(link)
-            self._execute_select_callbacks(link)
+        try:
+            c_link: str = self._clean_link(link)
+            self.receipt_link.set(c_link)
+            self._execute_select_callbacks(c_link)
             self.master.progress_bar.set(1)  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
+        except NoLinkError:
+            self._no_link()
+            self._execute_reset_callbacks()
+        except LinkError:
+            self._err_link()
+            self._execute_reset_callbacks()
 
     def _set_receipt_link(self):
         """Sets receipt link based on user input"""
         self._prog()
         _ = self.after(200, self._help_get)
+
+    @staticmethod
+    def _no_link():
+        """No link pop up"""
+        _ = CTkMessagebox(
+            title='No link provided',
+            message='No link provider',
+            justify='center',
+            icon='cancel',
+            font=FONT
+        )
+
+    @staticmethod
+    def _err_link():
+        """Invalid link pop up"""
+        _ = CTkMessagebox(
+            title='Invalid link',
+            message='Invalid link please provide a proper odoo receipt link',
+            justify='center',
+            icon='cancel',
+            font=FONT
+        )
 
     def reg_select_callback(self, callback: Callable[[str], None]):
         """Register callback to be executed when a link is provided"""
