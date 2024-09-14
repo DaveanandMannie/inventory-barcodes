@@ -1,3 +1,4 @@
+# WARN: threading is implicit. I want to rewrite with explicit multithreading
 import os
 from datetime import datetime
 from typing import Any, Callable, cast
@@ -92,8 +93,14 @@ class LinkFrame(CTkFrame):
             row=0, column=3, padx=20, pady=20, ipadx=5, ipady=5, sticky='e'
         )
 
-    def _set_receipt_link(self):
-        """Sets receipt link based on user input"""
+    # HACK: avoiding threading for next refact/rewrite
+    def _prog(self):
+        """Change some global labels for user feedback"""
+        self.master.odoo_ref.set('Working please wait...')  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
+        self.master.progress_label_text.set('Grabbing reciept info...')  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
+
+    def _help_get(self):
+        """Func to get link and execute  callbacks"""
         dialog: CTkInputDialog = CTkInputDialog(
             text='Paste receipt link:',
             title='Receipt Link',
@@ -104,6 +111,12 @@ class LinkFrame(CTkFrame):
         if link:
             self.receipt_link.set(link)
             self._execute_select_callbacks(link)
+            self.master.progress_bar.set(1)  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
+
+    def _set_receipt_link(self):
+        """Sets receipt link based on user input"""
+        self._prog()
+        _ = self.after(200, self._help_get)
 
     def reg_select_callback(self, callback: Callable[[str], None]):
         """Register callback to be executed when a link is provided"""
@@ -450,9 +463,7 @@ class App(CTk):
             var_export=self.product_var_csv.get(),
             output_dir=self.joined_csv_dir.get()
         )
-
         self.label_data = generate_all_label_data(joined_csv)
-
         self.odoo_ref.set(cast(str, data['reference']))
 
     def reset_odoo_ref(self):
@@ -475,7 +486,7 @@ class App(CTk):
         label_iter = iter(self.label_data)
         process_count: int = 1
 
-        # FIXME: I can't remember why I did it this way ?
+        # HACK:  I did this this way to avoiding having to use threading
         def _process():
             try:
                 nonlocal process_count
