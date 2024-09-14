@@ -145,7 +145,7 @@ class SingleLabelFrame(CTkFrame):
 
         self.in_qty = StringVar(value=str(label_data['in_qty']))
         self.partial = BooleanVar(value=label_data['partial'])
-        self.box_qty = IntVar(value=0)
+        self.box_qty = IntVar(value=label_data['box_qty'])
 
         self.partial = CTkCheckBox(
             self,
