@@ -1,5 +1,6 @@
-
 CSV_HISTORY_DIR=test_targets/csv_history
 HOTFOLDER_DIR=test_targets/hotfolder
 PRODUCT_VAR_CSV=documents/product_code_case.csv
 DEFAULT_PDF_DIR=test_targets
+EMAIL=
+PASSWORD=
