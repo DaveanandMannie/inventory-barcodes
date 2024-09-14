@@ -1,234 +1,218 @@
-import pymupdf
-from pymupdf import Document, Page
+import csv
+import os
+from io import BytesIO
+from typing import TypedDict, cast
+
 import pandas as pd
-from pandas import DataFrame
+import pymupdf
 from barcode import Code128
 from barcode.writer import ImageWriter
-import io
-from io import BytesIO
-from typing import Optional
-import csv
+from pandas import DataFrame
+from pymupdf import Document, Page, Rect
+from selenium.webdriver.chrome.webdriver import WebDriver
+
+from scraper import scraper
+
+# ============ Type defs ============ #
+type ProductData = list[list[str]]
+type ReceiptData = dict[str, str | ProductData]
 
 
-# this assumes the given pdf is generated from picking operations on odoo 16
+class LabelData(TypedDict):
+    product: str
+    partial: bool
+    barcode: str
+    in_qty: int
+    box_qty: int
+    num_boxes: int
+    has_barcode: bool
+    known_box_qty: bool
+    in_ref: str
+# ============ Type defs end ============ #
+
+
 def _sanitize_filename(filename: str) -> str:
+    """Removes invalid characters based on Windows file criterion"""
     invalid_chars = '\\/:*?"<>|'
     for char in invalid_chars:
         filename = filename.replace(char, '-')
     return filename
 
 
-def _generate_text(label_data: dict) -> str:
+def _generate_text(label_data: LabelData) -> str:
+    """Generates the text below the scannable barcode"""
     text: str
-    if label_data['partial']:
-        text = f'{label_data['product']}\nPartial: {label_data['in_qty']} Units\n{label_data['in_ref']}\n'
-    elif not label_data['known_box_qty']:
-        text = (
-            f'{label_data['product']}\nUnknown box Qty: {label_data['in_qty']}\n{label_data['in_ref']}\nLet Dave know\n'
-        )
-    else:
-        text = f'{label_data['product']}\n{label_data['box_qty']} Units\n{label_data['in_ref']}\n'
+    product: str = label_data['product']
+    in_qty: int = label_data['in_qty']
+    ref: str = label_data['in_ref']
+    box_qty: int = label_data['box_qty']
 
-    if not label_data['has_barcode']:
-        text += 'Need to create a barcode; Manual transfer and let Dave know'
-    text = text.replace('(', '\n(')
+    if label_data['partial']:
+        text = f'{product}\nPartial: {in_qty} Units\n{ref}\n'
+    elif not label_data['known_box_qty']:
+        text = f'{product}\nUnknown box qty{in_qty}\n{ref}\nlet Dave know\n'
+    else:
+        text = f'{product}\n{box_qty} Units\n{ref}\n'
     return text
 
 
-# noinspection PyUnresolvedReferences
-def _place_barcode(page_in_pdf: Page, barcode_str: str, options: dict):
-    barcode_obj: Code128 = Code128(barcode_str, writer=ImageWriter())
-    barcode_svg_buffer: BytesIO = io.BytesIO()
-    barcode_obj.write(barcode_svg_buffer, options=options)
-    barcode_svg_buffer.seek(0)
+def _place_barcode(page: Page, barcode: str, opts: dict[str, float]):
+    """
+    Places the scannable barcode img into the center of the page
+    """
+    barcode_obj: Code128 = Code128(barcode, writer=ImageWriter())
+    barcode_svg_buff: BytesIO = BytesIO()
+    barcode_obj.write(barcode_svg_buff, options=opts)
+    _ = barcode_svg_buff.seek(0)
 
-    img_rect_width = page_in_pdf.rect.width * 0.5
-    img_rect_height = page_in_pdf.rect.height * 0.5
-    page_width = page_in_pdf.rect.width
-    x_left = (page_width - img_rect_width) / 2
+    # basedpyright cant go this deep I guess.
+    img_rect_width = page.rect.width * 0.5  # pyright: ignore[reportAny]
+    img_rect_height = page.rect.height * 0.5  # pyright: ignore[reportAny]
+    page_width = page.rect.width  # pyright: ignore[reportAny]
+    x_left = (page_width - img_rect_width) / 2  # pyright: ignore[reportAny]
     y_center = 0.7
-    rect = pymupdf.Rect(x_left, y_center, x_left + img_rect_width, y_center + img_rect_height)
-    page_in_pdf.insert_image(rect, stream=barcode_svg_buffer)
-    barcode_svg_buffer.close()
-    return
+
+    rect = Rect(
+        x_left, y_center, x_left + img_rect_width, y_center + img_rect_height    # pyright: ignore[reportAny]  # noqa: E501
+    )
+    page.insert_image(rect, stream=barcode_svg_buff)  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
+    barcode_svg_buff.close()
 
 
-def parse_odoo_pdf(receiving_pdf: str) -> list[list]:
+def get_receipt_products(url: str, email: str, password: str) -> ReceiptData:
     """
-
-    :param:
-        receiving_doc: Path to Odoo's picking operations
-    :return list :
-        list of list
-        - Product : str
-        - Incoming Quantity: str
-        - Barcode : str | int | None
-        - Expected Box Quantity: int | None
+    Replaces func parse_odoo_pdf
+    Takes Receipt url and login credentials
+    returns a dict with receipt reference and receipt data
+    :return dict:
     """
-    doc: Document = pymupdf.open(receiving_pdf)
-    num_of_pages: int = doc.__len__()
-    table_list: list = []
-    for number in range(num_of_pages):
-        page = doc[number]
-        table_data_obj = page.find_tables(strategy='lines_strict')
-        table_data = table_data_obj[0].extract()
-        table_list.extend(table_data)
-    cleaned_data: list = [table_list[0][:-2]]
-    for sublist in table_list[1:]:
-        if 'Product' in sublist:
-            continue
-        cleaned_data.extend([sublist[:-2]])
-    return cleaned_data
+    driver: WebDriver = scraper.driver_setup(email=email, password=password)
+    product_data: ProductData = scraper.get_label_data(link=url, driver=driver)
+    reference: str = scraper.get_reference(driver)
+    receipt_data: ReceiptData = {
+        'reference': reference,
+        'product_data': product_data
+    }
+    driver.quit()
+    return receipt_data
 
 
-def left_join(cleaned_data: list, product_var_export: str, output_file_path: str, receiving_pdf: str) -> str:
+def left_join(receipt_data: ReceiptData,
+              var_export: str,
+              output_dir: str
+              ) -> str:
     """
-
-    :param list cleaned_data: list of list parsed from a Picking Operations PDF
-    :param str product_var_export: Path to Odoo's product variant export using Display Name and Barcode
-    :param str output_file_path: Path to a folder to keep history of the left joins
-    :param str receiving_pdf: Path or name of the Picking Operations PDF
-    :return str: the cleaned file name. reference number in Odoo
+    Parameters:
+        receipt_data: Receipt data dict
+        var_export: export from odoo containg proudct, barcodes,
+                    and known case number
+        output_dir: output dir
     """
-    in_ref: str = receiving_pdf.split('-')[-1].rstrip('.pdf').strip()
-    filename: str = f'{output_file_path}/{in_ref}.csv'
-    cleaned_df: DataFrame = pd.DataFrame(cleaned_data[1:], columns=cleaned_data[0])
-    product_list: DataFrame = pd.read_csv(product_var_export)
-    product_list = product_list.rename(columns={product_list.columns[0]: 'Product'})
-    joined: DataFrame = pd.merge(cleaned_df, product_list, on='Product', how='left')
-    joined.to_csv(filename, index=False)
+    ref = cast(str, receipt_data['reference'])
+    file: str = f'{ref}.csv'
+    filename: str = os.path.join(output_dir, file)
+    product_data = cast(ProductData, receipt_data['product_data'])
+    product_df = DataFrame(product_data[1:], columns=product_data[0])  # pyright: ignore[reportArgumentType]  # noqa: E501
+
+    var_list: DataFrame = pd.read_csv(var_export)
+    var_list = var_list.rename(columns={var_list.columns[0]: 'Product'})  # pyright: ignore[reportUnhashable]  # noqa: E501
+
+    join: DataFrame = pd.merge(product_df, var_list, on='Product', how='left')
+    join.to_csv(filename, index=False)
     return filename
 
 
-def generate_label_data(line_data: list, receiving_pdf: str) -> dict:
+def generate_label_data(line_data: list[str], reference: str) -> LabelData:
     """
+    Creates the dict that the barcode lib will use to create the barcode and
+    the contains the data needed for the GUI
+    """
+    ref: str = reference.split('\\')[-1].split('.')[0]  # FIXME: ugly oneliner
+    barcode: str = line_data[2]
+    in_qty: int = int(float(line_data[1]))
+    box_qty: int = 0
+    known_box_qty: bool = False
+    num_boxes: int = 0
+    partial: bool = True
 
-    :param list line_data: [
-        Product: str
-        Incoming Quantity: str
-        Barcode: int | str | None
-        Expected Box Quantity: int | None
-        ]
-    :param  str receiving_pdf: Path or name of the Picking Operations PDF
-    :return dict:
-        - 'product' str : Display name in Odoo
-        - 'partial' bool : If the full box cannot divide evenly with the in_qty
-        - 'barcode' str : Content to make the Code128 barcode
-        - 'in_qty' int : amount outlined in Picking Operation
-        - 'box_qty' int | None : Number of units a full box
-        - 'num_boxes' int |None :
-        - 'has_barcode' bool : If Odoo has a barcode for the item
-        - 'known_box_qty' Bool: If a box qty exists
-        - 'in_ref' str: reference for Odoo Picking Operation
-    """
-    # this feels like a refactor. Sorry future me :(
-    inventory_reference: str = receiving_pdf.split('-')[-1].rstrip('.pdf').strip()
-    in_qty: int = int(float(line_data[1].split()[0]))
-    num_boxes: Optional[int]
-    box_qty: Optional[int]
-    known_box_qty: bool
-    partial: bool
-    code: Optional[str]
-    has_barcode: bool
-    if line_data[3] == '':
-        box_qty = None
-        known_box_qty = False
-    else:
+    if line_data[3]:
         box_qty = int(float(line_data[3]))
         known_box_qty = True
 
-    if line_data[2] == '':
-        code = None
-        has_barcode = False
-    else:
-        code = str(line_data[2])
-        has_barcode = True
-
     if known_box_qty:
-        partial = in_qty % box_qty != 0
-    else:
-        partial = True
+        partial = (in_qty % box_qty != 0)
 
-    if box_qty is not None:
+    if box_qty > 0:
         num_boxes = in_qty // box_qty
-    else:
-        num_boxes = None
 
-    label_data: dict = {
+    label_data: LabelData = {
         'product': line_data[0],
         'partial': partial,
-        'barcode': code,
+        'barcode': barcode,
         'in_qty': in_qty,
         'box_qty': box_qty,
         'num_boxes': num_boxes,
-        'has_barcode': has_barcode,
+        'has_barcode': bool(barcode),
         'known_box_qty': known_box_qty,
-        'in_ref': inventory_reference
+        'in_ref': ref
     }
     return label_data
 
 
-def generate_all_label_data(joined_csv: str, receiving_pdf: str) -> list[dict]:
+def generate_all_label_data(joined_fp: str) -> list[LabelData]:
     """
-
-    :param joined_csv: file path pointing to a file created by the left join func
-    :param receiving_pdf: file path pointing to Odoo Picking Operations PDF
-    :return list of dicts of label data:
+    Reads the csv created by the left jion func and retuns a list
+    of dicts containing all data need to create the label pdf
     """
-    all_barcode_data: list[dict] = []
-    with open(joined_csv) as csv_file:
+    ref: str = joined_fp.split('/')[-1].replace('-', '/')
+    data: list[LabelData] = []
+    with open(joined_fp) as csv_file:
         reader = csv.reader(csv_file)
-        next(reader)
+        _ = next(reader)
         for line in reader:
-            all_barcode_data.append(generate_label_data(line, receiving_pdf))
-    return all_barcode_data
+            data.append(generate_label_data(line_data=line, reference=ref))
+    return data
 
 
-# noinspection PyUnresolvedReferences
-def generate_label(hotfolder: str, label_data: dict):
+def generate_label(hotfolder: str, label_data: LabelData):
     """
-
-    :param str hotfolder: path to the hotfolder
-    :param  dict label_data: Created by generate_label_data(*)
-        - 'product' str : Display name in Odoo
-        - 'partial' bool : If the full box cannot divide evenly with the in_qty
-        - 'barcode' str : Content to make the Code128 barcode
-        - 'in_qty' int : amount outlined in Picking Operation
-        - 'box_qty' int | None : Number of units a full box
-        - 'num_boxes' int |None :
-        - 'has_barcode' bool : If Odoo has a barcode for the item
-        - 'known_box_qty' Bool: If a box qty exists
-        - 'in_ref' str: reference for Odoo Picking Operation
-    :return:
+    Creates labels based on  LabelData dict
+    :param:
+        Hotfolder: Destination for the file
+        label_data: data from generate_label data func
     """
-    # TODO: use config file for options: create func(environ? ) -> dict
     text: str = _generate_text(label_data)
-    writer_options: dict = {
+    writer_options: dict[str, float] = {
         'margin_bottom': 1,
         'margin_top': 1,
         'quiet_zone': 0,
         'module_width': 0.4,
         'module_height': 10.0,
         'font_size': 5,
-        'text_distance': 2,
+        'text_distance': 2
     }
     label: Document = pymupdf.open()
-    label.insert_page(pno=-1, width=432, height=288)
+    # TODO: try to replace with '.new_page(*kwargs)'
+    label.insert_page(pno=-1, width=432, height=288)  # pyright: ignore [reportAttributeAccessIssue]  # noqa: E501
     page: Page = label[0]
 
     if label_data['has_barcode']:
-        _place_barcode(page_in_pdf=page, barcode_str=label_data['barcode'], options=writer_options)
+        _place_barcode(
+            page=page, barcode=label_data['barcode'], opts=writer_options
+        )
 
-    text_rect = pymupdf.Rect(0, 100, 432, 288)
-    page.insert_textbox(text_rect, text, fontsize=20, align=pymupdf.TEXT_ALIGN_CENTER)
+    text_rect = Rect(0, 100, 432, 288)
+    page.insert_textbox(  # pyright: ignore [reportAttributeAccessIssue]
+        text_rect, text, fontsize=20, align=pymupdf.TEXT_ALIGN_CENTER
+    )
 
     page.set_rotation(90)
     filename: str = _sanitize_filename(label_data['product'])
 
-    if label_data['num_boxes'] is not None and not label_data['partial']:
-        for i in range(0, label_data['num_boxes']):
-            label.save(f'{hotfolder}/{filename}{i + 1}.pdf')
+    if not label_data['partial'] and label_data['num_boxes'] != 0:
+        for i in range(label_data['num_boxes']):
+            label.save(f'{hotfolder}/{filename}-{i + 1}.pdf')
     else:
         label.save(f'{hotfolder}/{filename}-1.pdf')
+
     label.close()
-    return
