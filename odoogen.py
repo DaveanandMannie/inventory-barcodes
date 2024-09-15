@@ -133,7 +133,7 @@ def generate_label_data(line_data: list[str], reference: str) -> LabelData:
     box_qty: int = 0
     known_box_qty: bool = False
     num_boxes: int = 0
-    partial: bool = True
+    partial: bool = False
 
     if line_data[3]:
         box_qty = int(float(line_data[3]))
