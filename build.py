@@ -1,7 +1,9 @@
-import PyInstaller.__main__
+# pyright: reportAny=false
+import argparse
 import os
 import shutil
-import argparse
+
+import PyInstaller.__main__
 
 
 def build(target_dir: str):
@@ -18,7 +20,8 @@ def build(target_dir: str):
         '--add-data=./.venv/Lib/site-packages/customtkinter;customtkinter',
         '--add-data=./.venv/Lib/site-packages;site-packages',
         '--add-data=./.venv/Lib/site-packages/PyMuPDF;PyMuPDF/',
-        '--add-data=./.venv/Lib/site-packages/barcode;barcode/',  # this is where the font lives
+        '--add-data=./.venv/Lib/site-packages/selenium;selenium/',
+        '--add-data=./.venv/Lib/site-packages/barcode;barcode/',  # this is where the font lives  # noqa: E501
         '--icon=./resources/icon.ico',
         f'--distpath={target_dir}',
         '-y',
@@ -35,7 +38,9 @@ def build(target_dir: str):
     source_resources_dir = os.path.join(build_dir, '_internal', 'resources')
     shutil.move(source_resources_dir, build_dir)
 
-    source_product_csv = os.path.join(build_dir, '_internal', 'product_code_case.csv')
+    source_product_csv = os.path.join(
+        build_dir, '_internal', 'product_code_case.csv'
+    )
     shutil.move(source_product_csv, build_dir)
 
     source_env = os.path.join(build_dir, '_internal', '.env')
@@ -44,7 +49,11 @@ def build(target_dir: str):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Build the Receiving Barcode Generator')
-    parser.add_argument('build_dir', help='Target directory for building the application')
+    parser = argparse.ArgumentParser(
+        description='Build the Receiving Barcode Generator'
+    )
+    _ = parser.add_argument(
+        'build_dir', help='Target directory for building the application'
+    )
     args = parser.parse_args()
     build(args.build_dir)

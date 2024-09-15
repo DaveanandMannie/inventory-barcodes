@@ -1,10 +1,9 @@
 # Receiving Barcode Generator
-A small app that creates barcode labels for each box on a given PO
+A small app that creates barcode labels for each box on a given Recept
 
-Current issue: App is configured for windows on darkmode, Light mode has issues with transparent UI componants
 
 ## Usage
-To use simply download the ```Picking Operations from A PO ``` and click ```Generate``` it will send all labels
+To use simply copy the url to the specific recipt and click ```Generate``` it will send all labels
 associated with the PO to our hotfolder to print the labels
 
 On the left of the application, you can reprint individual labels and correct any mistakes, either from on the PO side
@@ -13,6 +12,7 @@ The label output is 4x6
 
 ![demo](https://github.com/DaveanandMannie/inventory-barcodes/blob/master/readme_resources/demo.gif)
 ![output](https://github.com/DaveanandMannie/inventory-barcodes/blob/master/readme_resources/output.png)
+![output](https://github.com/DaveanandMannie/inventory-barcodes/blob/master/readme_resources/link_err.jpg)
 
 ## Installation
 ### From the Source
